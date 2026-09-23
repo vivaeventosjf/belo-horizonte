@@ -1,8 +1,18 @@
 /**
- * Monta em publicar/ o site inteiro da franquia, com uma pasta por unidade,
- * pronto para o Netlify.
+ * Monta em publicar/ o que vai para o Netlify.
+ *
+ * Dois modos, conforme a variavel de ambiente UNIDADE:
  *
  *   node ferramentas/netlify.js
+ *     todas as unidades, uma pasta cada:
+ *     franquia.vivaeventos.com.br/belohorizonte
+ *
+ *   UNIDADE=belo-horizonte node ferramentas/netlify.js
+ *     so aquela unidade, na RAIZ do site:
+ *     belohorizonte.vivaeventos.com.br
+ *
+ * No Netlify a variavel se define em Site configuration > Environment
+ * variables. Sem ela, o site publica a franquia inteira.
  *
  * Resultado:
  *   publicar/
@@ -41,11 +51,18 @@ function copiar(origem, destino) {
   return n;
 }
 
-const slugs = listar();
+const soUma = (process.env.UNIDADE || '').trim();
+const slugs = soUma ? [soUma] : listar();
+
 if (!slugs.length) {
   console.error('Nenhuma unidade em unidades/.');
   process.exit(1);
 }
+if (soUma && !listar().includes(soUma)) {
+  console.error('UNIDADE="' + soUma + '" nao existe. Disponiveis: ' + listar().join(', '));
+  process.exit(1);
+}
+if (soUma) console.log('Modo: uma unidade so, na raiz do site.');
 
 fs.rmSync(SAIDA, { recursive: true, force: true });
 fs.mkdirSync(SAIDA, { recursive: true });
@@ -57,13 +74,15 @@ for (const slug of slugs) {
 
   const dados = calcular(carregar(slug).dados);
   const origem = path.join(raiz, 'publicado', slug);
-  const n = copiar(origem, path.join(SAIDA, dados.caminho));
+  // no modo de uma unidade so, ela vai para a raiz e nao para uma subpasta
+  const n = copiar(origem, soUma ? SAIDA : path.join(SAIDA, dados.caminho));
 
   unidades.push(dados);
-  console.log('  /' + dados.caminho.padEnd(16) + n + ' arquivos   ' + dados.unidade);
+  console.log('  ' + (soUma ? '/' : '/' + dados.caminho).padEnd(17) + n + ' arquivos   ' + dados.unidade);
 }
 
-/* ---------- pagina da raiz ---------- */
+/* ---------- pagina da raiz (so no modo franquia) ---------- */
+if (!soUma) {
 // Quem abrir franquia.vivaeventos.com.br sem caminho cai aqui.
 const itens = unidades
   .map((u) => '      <li><a href="/' + u.caminho + '/">' + u.unidade + ' · ' + u.nomeFrase + '</a></li>')
@@ -104,6 +123,7 @@ const redirects = unidades
   .map((u) => '/' + u.caminho + '/*   /' + u.caminho + '/index.html   200')
   .join('\n');
 fs.writeFileSync(path.join(SAIDA, '_redirects'), redirects + '\n');
+}
 
 fs.writeFileSync(
   path.join(SAIDA, '_headers'),

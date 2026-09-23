@@ -1,0 +1,20 @@
+# Configuracao do Netlify. Com este arquivo no repositorio, nao e preciso
+# preencher "build command" nem "publish directory" no painel.
+#
+# Qual unidade o site publica sai da variavel de ambiente UNIDADE, em
+# Site configuration > Environment variables:
+#
+#   UNIDADE = belo-horizonte   ->  a landing de BH na raiz do site
+#   UNIDADE = aracaju          ->  a landing de Aracaju na raiz do site
+#   (sem a variavel)           ->  todas as unidades, uma pasta cada:
+#                                  /belohorizonte, /aracaju
+#
+# Assim o mesmo repositorio serve tanto um site por unidade quanto o site
+# da franquia inteira, sem duplicar codigo.
+
+[build]
+  command = "node ferramentas/netlify.js"
+  publish = "publicar"
+
+[build.environment]
+  NODE_VERSION = "20"
