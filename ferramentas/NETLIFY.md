@@ -10,6 +10,21 @@ https://franquia.vivaeventos.com.br/aracaju
 O subdomínio `franquia` é independente do `vivaeventos.com.br`: o site principal
 continua no WordPress, sem nenhuma mudança.
 
+## Um site só, uma pasta por unidade
+
+É assim que a franquia está publicada: **um** site no Netlify, ligado a **um**
+repositório, servindo todas as unidades em subpastas. Adicionar unidade não
+exige site novo nem repositório novo — basta criar a pasta em `unidades/` e
+fazer o deploy.
+
+O `netlify.toml` na raiz já traz o build command e o publish directory, então
+não é preciso configurar nada no painel.
+
+> O repositório também sabe publicar **uma unidade só na raiz** do site
+> (`belohorizonte.vivaeventos.com.br`), definindo a variável de ambiente
+> `UNIDADE` no Netlify. Não é o que usamos: com ela definida, o site deixa de
+> servir `/belohorizonte` e `/aracaju`. Deixe a variável **em branco**.
+
 ## Gerar
 
 ```bash
