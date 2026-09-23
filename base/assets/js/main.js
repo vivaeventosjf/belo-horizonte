@@ -2,7 +2,7 @@
    VIVA Eventos · Landing de captação para comissões
    ========================================================= */
 
-/* A configuração da região/unidade fica em assets/js/regiao.js */
+/* A configuração da unidade fica em assets/js/unidade.js (fonte: unidades/<slug>/unidade.js) */
 const SITE = {
   nome: '',
   nomeFrase: '',
@@ -15,7 +15,7 @@ const SITE = {
   webhookUrl: '',
   cidades: [],
   instituicoes: [],
-  ...(window.REGIAO || {}),
+  ...(window.UNIDADE || window.REGIAO || {}),
 };
 
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
@@ -29,6 +29,8 @@ const storage = {
 };
 
 const OUTRA_INSTITUICAO = 'Outra';
+// Rótulo mostrado nas listas quando a pessoa quer escrever o nome
+const OUTRA_INSTITUICAO_LABEL = 'Outra instituição (escrever)';
 
 const onlyDigits = (v) => String(v || '').replace(/\D/g, '');
 
@@ -74,14 +76,14 @@ function bindSiteConfig() {
     });
   };
   fillDatalist($('[data-regiao-cidades-lista]'), SITE.cidades);
-  fillDatalist($('[data-regiao-instituicoes]'), SITE.instituicoes);
+  fillDatalist($('[data-regiao-instituicoes]'), [OUTRA_INSTITUICAO_LABEL, ...SITE.instituicoes]);
 
   const instSelect = $('[data-regiao-instituicoes-select]');
   if (instSelect) {
-    [...SITE.instituicoes, OUTRA_INSTITUICAO].forEach((item) => {
+    [OUTRA_INSTITUICAO, ...SITE.instituicoes].forEach((item) => {
       const opt = document.createElement('option');
       opt.value = item;
-      opt.textContent = item === OUTRA_INSTITUICAO ? 'Outra instituição (escrever)' : item;
+      opt.textContent = item === OUTRA_INSTITUICAO ? OUTRA_INSTITUICAO_LABEL : item;
       instSelect.append(opt);
     });
   }
@@ -274,6 +276,19 @@ function initMobileCta() {
   new IntersectionObserver(([e]) => { formVisible = e.isIntersecting; update(); }, { threshold: 0.05 }).observe(form);
 }
 
+/* ---------- Máscara de telefone (formulário e botão flutuante) ---------- */
+function applyPhoneMask(input) {
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const d = onlyDigits(input.value).slice(0, 11);
+    const corte = d.length === 11 ? 7 : 6;
+    let out = d;
+    if (d.length > 2) out = `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length > 6) out = `(${d.slice(0, 2)}) ${d.slice(2, corte)}-${d.slice(corte)}`;
+    input.value = out;
+  });
+}
+
 /* ---------- Envio para o CRM ---------- */
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
 
@@ -290,7 +305,7 @@ function getUtms() {
 
 async function sendLead(data) {
   if (!SITE.webhookUrl) {
-    console.warn('[VIVA] webhookUrl não configurado em assets/js/regiao.js. O lead não foi enviado a nenhum sistema.', data);
+    console.warn('[VIVA] webhookUrl não configurado em unidades/<slug>/unidade.js. O lead não foi enviado a nenhum sistema.', data);
     return;
   }
   // text/plain evita preflight de CORS (compatível com Google Apps Script)
@@ -321,10 +336,30 @@ function initWhatsappWidget() {
   const erro = $('#wa-erro');
   const closeBtn = $('#wa-close');
 
+  const CAMPOS = ['nome', 'email', 'whatsapp', 'cidade', 'instituicao', 'curso'];
+  applyPhoneMask(form.elements.whatsapp);
+
+  // Escolher "Outra…" na lista limpa o campo para a pessoa escrever o nome
+  const inputInstituicao = form.elements.instituicao;
+  inputInstituicao.addEventListener('input', () => {
+    if (inputInstituicao.value !== OUTRA_INSTITUICAO_LABEL) return;
+    inputInstituicao.value = '';
+    inputInstituicao.placeholder = 'Digite o nome da faculdade';
+  });
+
   // Se a pessoa já preencheu antes, não pedimos de novo
   let saved = {};
   try { saved = JSON.parse(storage.get('viva-wa') || '{}'); } catch { saved = {}; }
-  ['nome', 'curso', 'instituicao'].forEach((k) => { if (saved[k]) form.elements[k].value = saved[k]; });
+  CAMPOS.forEach((k) => { if (saved[k]) form.elements[k].value = saved[k]; });
+
+  const checks = [
+    ['nome', (v) => v.length >= 2, 'Preencha seu nome.'],
+    ['email', (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v), 'Digite um e-mail válido.'],
+    ['whatsapp', (v) => [10, 11].includes(onlyDigits(v).length), 'Digite o telefone com DDD.'],
+    ['cidade', (v) => v.length >= 2, 'Preencha a cidade.'],
+    ['instituicao', (v) => v.length >= 2, 'Preencha a faculdade.'],
+    ['curso', (v) => v.length >= 2, 'Preencha o curso.'],
+  ];
 
   const setOpen = (open) => {
     panel.hidden = !open;
@@ -343,21 +378,24 @@ function initWhatsappWidget() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const nome = form.elements.nome.value.trim();
-    const curso = form.elements.curso.value.trim();
-    const instituicao = form.elements.instituicao.value.trim();
+    const v = {};
+    CAMPOS.forEach((k) => { v[k] = form.elements[k].value.trim(); });
 
-    if (nome.length < 2 || !curso) {
-      erro.textContent = 'Preencha nome e curso para a gente já te chamar pelo nome.';
-      (nome.length < 2 ? form.elements.nome : form.elements.curso).focus();
+    CAMPOS.forEach((k) => form.elements[k].closest('.field').classList.remove('has-error'));
+    const invalido = checks.find(([k, ok]) => !ok(v[k]));
+    if (invalido) {
+      const [campo, , mensagem] = invalido;
+      erro.textContent = mensagem;
+      form.elements[campo].closest('.field').classList.add('has-error');
+      form.elements[campo].focus();
       return;
     }
     erro.textContent = '';
-    storage.set('viva-wa', JSON.stringify({ nome, curso, instituicao }));
+    storage.set('viva-wa', JSON.stringify(v));
 
-    const msg = `Olá, ${SITE.unidade}! Sou ${nome}, do curso de ${curso}`
-      + (instituicao ? ` (${instituicao})` : '')
-      + '. Quero falar sobre a formatura da minha turma.';
+    const { nome, email, whatsapp, cidade, instituicao, curso } = v;
+    const msg = `Olá, ${SITE.unidade}! Sou ${nome}, do curso de ${curso} (${instituicao}), de ${cidade}.`
+      + ' Quero falar sobre a formatura da minha turma.';
     const url = `https://wa.me/${onlyDigits(SITE.whatsapp)}?text=${encodeURIComponent(msg)}`;
 
     // abre antes do await para não ser bloqueado como popup
@@ -368,8 +406,12 @@ function initWhatsappWidget() {
       await sendLead({
         origem: 'whatsapp_flutuante',
         nome,
-        curso,
+        email,
+        whatsapp,
+        whatsapp_digitos: `55${onlyDigits(whatsapp)}`,
+        cidade,
         instituicao,
+        curso,
         unidade: SITE.unidade,
         regiao: SITE.nome,
         regiao_slug: SITE.slug || '',
@@ -436,14 +478,7 @@ function initForm() {
   });
 
   // Máscara de telefone
-  const phone = $('#f-whatsapp');
-  phone.addEventListener('input', () => {
-    const d = onlyDigits(phone.value).slice(0, 11);
-    let out = d;
-    if (d.length > 2) out = `(${d.slice(0, 2)}) ${d.slice(2)}`;
-    if (d.length > 6) out = `(${d.slice(0, 2)}) ${d.slice(2, d.length === 11 ? 7 : 6)}-${d.slice(d.length === 11 ? 7 : 6)}`;
-    phone.value = out;
-  });
+  applyPhoneMask($('#f-whatsapp'));
 
   // UTMs e página de origem
   const params = new URLSearchParams(location.search);

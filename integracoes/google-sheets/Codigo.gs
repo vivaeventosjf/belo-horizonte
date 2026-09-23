@@ -52,8 +52,12 @@ const ABAS = {
     colunas: [
       ['Recebido em', () => agora()],
       ['Nome', (d) => d.nome],
-      ['Curso', (d) => d.curso],
+      ['WhatsApp', (d) => d.whatsapp],
+      ['Abrir conversa', (d) => (d.whatsapp_digitos ? 'https://wa.me/' + d.whatsapp_digitos : '')],
+      ['E-mail', (d) => d.email],
+      ['Cidade', (d) => d.cidade],
       ['Instituição', (d) => d.instituicao],
+      ['Curso', (d) => d.curso],
       ['Região', (d) => d.regiao],
       ['Unidade', (d) => d.unidade],
       ...UTMS,
@@ -107,27 +111,31 @@ function testarGravacao() {
       email: 'ana@teste.com',
       papel: 'Faço parte da comissão',
       curso: 'Medicina',
-      instituicao: 'UFMG',
+      instituicao: 'TESTE Universidade',
       instituicao_digitada: false,
-      cidade: 'Belo Horizonte',
+      cidade: 'TESTE Cidade',
       formatura: '2029.1',
       formandos: '90',
       comissao: 'Sim, já temos comissão',
       fundo: 'Está começando agora',
       empresas: 'Ainda não pesquisamos',
       prioridades: ['Organizar o fundo', 'Comparar propostas'],
-      regiao: 'Belo Horizonte e Região',
-      unidade: 'VIVA Eventos BH',
+      regiao: 'TESTE Região',
+      unidade: 'TESTE Unidade',
       utm_source: 'teste',
       pagina: 'teste manual no Apps Script',
     },
     {
       origem: 'whatsapp_flutuante',
       nome: 'TESTE Bruno',
+      email: 'bruno@teste.com',
+      whatsapp: '(31) 97777-6666',
+      whatsapp_digitos: '5531977776666',
+      cidade: 'TESTE Cidade',
+      instituicao: 'TESTE Universidade',
       curso: 'Direito',
-      instituicao: 'PUC Minas',
-      regiao: 'Belo Horizonte e Região',
-      unidade: 'VIVA Eventos BH',
+      regiao: 'TESTE Região',
+      unidade: 'TESTE Unidade',
       utm_source: 'teste',
       pagina: 'teste manual no Apps Script',
     },
@@ -142,19 +150,36 @@ function testarGravacao() {
 /* ---------- Auxiliares ---------- */
 function obterAba(config) {
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  const cabecalho = config.colunas.map(([titulo]) => titulo);
   let aba = planilha.getSheetByName(config.nome);
 
   if (!aba) {
     aba = planilha.insertSheet(config.nome);
-    const cabecalho = config.colunas.map(([titulo]) => titulo);
     aba.appendRow(cabecalho);
-    aba.getRange(1, 1, 1, cabecalho.length)
-      .setFontWeight('bold')
-      .setBackground('#FF6A1F')
-      .setFontColor('#1D1A17');
+    formatarCabecalho(aba, cabecalho.length);
+    aba.setFrozenRows(1);
+    return aba;
+  }
+
+  // Se uma versão nova do script mudou as colunas, atualiza o cabeçalho existente
+  const ultima = aba.getLastColumn();
+  const atual = ultima > 0 ? aba.getRange(1, 1, 1, ultima).getValues()[0] : [];
+  if (atual.join('|') !== cabecalho.join('|')) {
+    if (ultima > cabecalho.length) {
+      aba.getRange(1, cabecalho.length + 1, 1, ultima - cabecalho.length).clearContent();
+    }
+    aba.getRange(1, 1, 1, cabecalho.length).setValues([cabecalho]);
+    formatarCabecalho(aba, cabecalho.length);
     aba.setFrozenRows(1);
   }
   return aba;
+}
+
+function formatarCabecalho(aba, colunas) {
+  aba.getRange(1, 1, 1, colunas)
+    .setFontWeight('bold')
+    .setBackground('#FF6A1F')
+    .setFontColor('#1D1A17');
 }
 
 function agora() {

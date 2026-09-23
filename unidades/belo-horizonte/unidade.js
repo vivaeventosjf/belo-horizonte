@@ -1,11 +1,17 @@
 /* =========================================================
-   CONFIGURAÇÃO DA REGIÃO
-   Para criar o site de outra região, duplique o projeto e
-   altere apenas este arquivo (e o <title>/description do index.html).
+   UNIDADE · Belo Horizonte
+   Este é o único arquivo com conteúdo desta unidade. O site
+   (HTML, CSS e JS) fica em base/ e é o mesmo para todas.
+   Para publicar:  node ferramentas/build.js belo-horizonte
    ========================================================= */
 
-window.REGIAO = {
+window.UNIDADE = {
   slug: 'belo-horizonte',
+
+  // Endereco publico (Netlify). urlBase + caminho formam a URL final e
+  // alimentam o <link rel="canonical">, o og:url e a imagem de compartilhamento.
+  urlBase: 'https://franquia.vivaeventos.com.br',
+  caminho: 'belohorizonte',                 // pasta no site publicado -> /belohorizonte
 
   // Como a região aparece no site
   nome: 'Belo Horizonte e Região',      // selo do topo e títulos
@@ -15,6 +21,17 @@ window.REGIAO = {
   uf: 'MG',
 
   unidade: 'VIVA Eventos BH',            // nome da unidade (rodapé, FAQ, lead)
+
+  // Título e descrição da página. No site estático entram no <head>;
+  // no WordPress quem manda é o plugin de SEO, isto aqui vira só o rascunho.
+  seo: {
+    titulo: 'Análise da formatura da sua turma | VIVA Eventos BH',
+    descricao: 'Responda algumas perguntas sobre a sua turma e receba a análise de um especialista da VIVA Eventos BH: em que ponto a formatura está, o que resolver agora e quais são os próximos passos. Belo Horizonte e região.',
+    ogDescricao: 'Responda algumas perguntas rápidas e a equipe da VIVA Eventos BH analisa o cenário da formatura da sua turma.',
+  },
+
+  // Sufixo dos nomes de arquivo na Biblioteca de Mídia do WordPress
+  slugWordpress: 'viva-festa-universitaria-bh',
 
   // Contatos da unidade (vazio = não aparece no site)
   endereco: '',                          // ex.: 'Av. do Contorno, 0000 · Savassi, Belo Horizonte/MG'

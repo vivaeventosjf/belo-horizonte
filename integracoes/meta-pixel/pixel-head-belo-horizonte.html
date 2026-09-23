@@ -1,0 +1,40 @@
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1021388314287547');
+fbq('track', 'PageView');
+
+// ---------------------------------------------------------------
+// Ponte com a landing da VIVA
+// A pagina empurra dois eventos para o dataLayer; aqui eles viram
+// conversoes no pixel. Precisa vir DEPOIS do fbq('init', ...).
+//   analise_turma      formulario de 3 passos enviado com sucesso
+//   whatsapp_flutuante abriu a conversa pelo botao flutuante
+// ---------------------------------------------------------------
+window.dataLayer = window.dataLayer || [];
+(function () {
+  var _push = window.dataLayer.push;
+  window.dataLayer.push = function (o) {
+    try {
+      if (o && o.event === 'analise_turma') {
+        fbq('track', 'Lead', { content_category: o.curso, content_name: o.regiao });
+      }
+      if (o && o.event === 'whatsapp_flutuante') {
+        fbq('track', 'Contact', { content_category: o.curso, content_name: o.regiao });
+      }
+    } catch (e) {}
+    return _push.apply(window.dataLayer, arguments);
+  };
+})();
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1021388314287547&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->

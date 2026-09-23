@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Análise da formatura da sua turma | VIVA Eventos BH</title>
-  <meta name="description" content="Responda algumas perguntas sobre a sua turma e receba a análise de um especialista da VIVA Eventos BH: em que ponto a formatura está, o que resolver agora e quais são os próximos passos. Belo Horizonte e região.">
+  <title>{{seo.titulo}}</title>
+  <meta name="description" content="{{seo.descricao}}">
   <meta name="theme-color" content="#FF6A1F">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Análise da formatura da sua turma | VIVA Eventos BH">
-  <meta property="og:description" content="Responda algumas perguntas rápidas e a equipe da VIVA Eventos BH analisa o cenário da formatura da sua turma.">
+  <meta property="og:title" content="{{seo.titulo}}">
+  <meta property="og:description" content="{{seo.ogDescricao}}">
   <meta property="og:locale" content="pt_BR">
-  <meta property="og:image" content="assets/img/og-image.jpg">
+  <meta property="og:image" content="{{ogImage}}">
+{{tagsUrl}}
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" as="image" href="assets/img/hero-geral-640.webp" imagesrcset="assets/img/hero-geral-640.webp 640w, assets/img/hero-geral.webp 1100w" imagesizes="(max-width: 960px) 90vw, 480px">
   <script>document.documentElement.classList.add('js');</script>
@@ -703,7 +704,7 @@
               <div class="field-row">
                 <div class="field">
                   <label for="f-cidade">Cidade</label>
-                  <input id="f-cidade" name="cidade" type="text" autocomplete="off" list="lista-cidades" placeholder="Ex.: Belo Horizonte" required>
+                  <input id="f-cidade" name="cidade" type="text" autocomplete="off" list="lista-cidades" placeholder="Ex.: {{cidadePrincipal}}" required>
                   <datalist id="lista-cidades" data-regiao-cidades-lista></datalist>
                   <p class="field-error" id="e-cidade"></p>
                 </div>
@@ -883,22 +884,36 @@
       <p class="wa-sub">Conta rapidinho quem é você. Assim a gente já começa a conversa sabendo da sua turma.</p>
       <form id="wa-form" novalidate>
         <div class="field">
-          <label for="wa-nome">Seu nome</label>
+          <label for="wa-nome">Nome</label>
           <input id="wa-nome" name="nome" type="text" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="wa-email">E-mail</label>
+          <input id="wa-email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="wa-whatsapp">Telefone (WhatsApp)</label>
+          <input id="wa-whatsapp" name="whatsapp" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="(00) 00000-0000" required>
+        </div>
+        <div class="field">
+          <label for="wa-cidade">Cidade</label>
+          <input id="wa-cidade" name="cidade" type="text" list="lista-cidades" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="wa-instituicao">Faculdade</label>
+          <input id="wa-instituicao" name="instituicao" type="text" list="lista-instituicoes" autocomplete="off" required>
         </div>
         <div class="field">
           <label for="wa-curso">Curso</label>
           <input id="wa-curso" name="curso" type="text" placeholder="Ex.: Medicina" required>
         </div>
-        <div class="field">
-          <label for="wa-instituicao">Faculdade <span class="optional">(opcional)</span></label>
-          <input id="wa-instituicao" name="instituicao" type="text" list="lista-instituicoes" autocomplete="off">
+        <p class="field-error" id="wa-erro" role="alert"></p>
+        <div class="wa-actions">
+          <button type="submit" class="btn btn-orange btn-block">
+            <svg class="icon"><use href="#i-chat"/></svg>
+            Abrir conversa
+          </button>
         </div>
-        <p class="field-error" id="wa-erro"></p>
-        <button type="submit" class="btn btn-orange btn-block">
-          <svg class="icon"><use href="#i-chat"/></svg>
-          Abrir conversa
-        </button>
       </form>
     </div>
     <button type="button" class="wa-fab" id="wa-fab" aria-expanded="false" aria-controls="wa-panel">
@@ -912,7 +927,7 @@
     <a href="#proposta" class="btn btn-orange btn-block">Analisar minha turma</a>
   </div>
 
-  <script src="assets/js/regiao.js" defer></script>
+  <script src="assets/js/unidade.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>
 </html>

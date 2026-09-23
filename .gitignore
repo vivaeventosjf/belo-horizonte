@@ -1,17 +1,27 @@
 # ---------------------------------------------------------
-# Banco de imagens original (não vai para o site)
-# As versões otimizadas para a web ficam em assets/img/
+# Bancos de imagem originais (não vão para o site)
+# As versões otimizadas ficam em base/assets/img/ e em
+# unidades/<slug>/img/
 # ---------------------------------------------------------
-*.zip
-1. BAILE*/
-3. PRÉ-EVENTOS*/
-Produção VIVA*/
+assets-originais/
 
 # ---------------------------------------------------------
-# Material interno (personas, pesquisa, mapa mental)
+# Material interno (personas, pesquisa, mapa mental) e pacotes
+# recebidos prontos — o que importava deles já virou ferramenta
 # ---------------------------------------------------------
 *.pdf
+*.rar
+*.zip
+landing-viva-bh-wordpress/
 WhatsApp Image*.jpeg
+
+# ---------------------------------------------------------
+# Restos da estrutura antiga. Nao consegui remover daqui (o
+# ambiente bloqueia exclusao); pode apagar as duas pastas a mao:
+# o conteudo delas ja esta em base/ e em publicado/
+# ---------------------------------------------------------
+publicacao-wordpress/
+/assets/
 
 # ---------------------------------------------------------
 # Sistema
@@ -19,3 +29,17 @@ WhatsApp Image*.jpeg
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# ---------------------------------------------------------
+# Saída gerada pelas ferramentas
+#   node ferramentas/build.js <unidade>
+#   node ferramentas/wordpress.js <unidade>
+# ---------------------------------------------------------
+publicado/
+publicar/
+# blocos exportados a mao para repassar a quem publica
+conteudo-elementor-*.html
+
+# O HTML intermediário dos anúncios é recriado pelo gerador.
+# Os PNG ficam no repositório: são a peça que vai para o anúncio.
+unidades/*/anuncios/*/html/

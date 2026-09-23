@@ -1686,7 +1686,7 @@ html[data-course="med"] .segmented-thumb { transform: translateX(100%); }
   position: fixed;
   right: clamp(16px, 3vw, 28px);
   bottom: clamp(16px, 3vw, 28px);
-  z-index: 45;
+  z-index: 55;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1758,13 +1758,34 @@ html[data-course="med"] .segmented-thumb { transform: translateX(100%); }
   letter-spacing: -0.02em;
 }
 .wa-sub {
-  margin: 8px 0 18px;
+  margin: 6px 0 14px;
   font-size: 0.9rem;
   font-weight: 300;
   color: var(--ink-2);
 }
-#wa-form { display: grid; gap: 14px; }
-#wa-form .field input { min-height: 46px; padding: 11px 14px; }
+/* altura limitada: o painel começa sempre abaixo do cabeçalho fixo */
+.wa-panel {
+  max-height: calc(100dvh - 200px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#wa-form { display: grid; gap: 8px; }
+#wa-form .field { gap: 4px; }
+#wa-form .field label { font-size: 0.8125rem; }
+#wa-form .field input { min-height: 42px; padding: 9px 14px; }
+/* rodapé com o botão de enviar, sempre visível enquanto a pessoa rola o painel.
+   Vai até a borda do painel (margens negativas) para nada aparecer por baixo. */
+.wa-panel { --wa-pad: 24px; padding: var(--wa-pad); }
+.wa-actions {
+  position: sticky;
+  bottom: calc(-1 * var(--wa-pad));
+  z-index: 1;
+  margin: 4px calc(-1 * var(--wa-pad)) calc(-1 * var(--wa-pad));
+  padding: 12px var(--wa-pad) var(--wa-pad);
+  background: var(--white);
+  box-shadow: 0 -12px 16px -12px rgba(29, 26, 23, 0.18);
+}
+#wa-form .wa-actions .btn { margin-top: 0; }
 #wa-form .btn { margin-top: 4px; }
 #wa-form .btn .icon { width: 20px; height: 20px; }
 
@@ -1950,6 +1971,7 @@ html[data-course="med"] .segmented-thumb { transform: translateX(100%); }
   .site-footer { padding-bottom: 110px; }
 
   .wa-widget { bottom: calc(100px + env(safe-area-inset-bottom)); right: 16px; }
+  .wa-panel { max-height: calc(100dvh - 270px); --wa-pad: 20px; }
   .wa-fab { padding: 13px; }
   .wa-fab-label { display: none; }
   .wa-fab .icon { width: 24px; height: 24px; }

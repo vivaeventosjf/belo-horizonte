@@ -5,7 +5,7 @@ Leva uns 10 minutos e não precisa programar. No fim, cada envio do site vira um
 A planilha terá duas abas, criadas sozinhas no primeiro envio:
 
 - **Análises da turma**: formulário de 3 passos, com nome, WhatsApp, e-mail, curso, instituição, cidade, formatura, formandos, comissão, fundo, empresas, prioridades, região e UTMs. Tem também uma coluna **Abrir conversa** com link direto para o WhatsApp da pessoa.
-- **WhatsApp flutuante**: botão flutuante, com nome, curso, instituição, região e UTMs.
+- **WhatsApp flutuante**: botão flutuante, com nome, WhatsApp, e-mail, cidade, instituição, curso, região e UTMs. Também tem a coluna **Abrir conversa**.
 
 ---
 
@@ -42,7 +42,7 @@ Para conferir, abra a URL no navegador. Deve aparecer `{"ok":true,"mensagem":"We
 
 ## 5. Colocar a URL no site
 
-Em `assets/js/regiao.js`, cole a URL no campo `webhookUrl`:
+Em `unidades/<slug>/unidade.js` (cada unidade tem a sua planilha), cole a URL no campo `webhookUrl`:
 
 ```js
 webhookUrl: 'https://script.google.com/macros/s/XXXXXXXX/exec',
@@ -60,7 +60,7 @@ Editar e salvar **não basta**: a URL continua rodando a versão antiga. Para pu
 2. Clique no lápis da implantação ativa.
 3. Em **Versão**, escolha **Nova versão** e clique em **Implantar**.
 
-Se criar uma **Nova implantação**, a URL muda e precisa ser trocada no `regiao.js`.
+Se criar uma **Nova implantação**, a URL muda e precisa ser trocada no `unidade.js`.
 
 ## Dúvidas comuns
 
