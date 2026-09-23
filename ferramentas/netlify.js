@@ -34,6 +34,22 @@ const { raiz, listar, carregar, calcular } = require('./unidade');
 
 const SAIDA = path.join(raiz, 'publicar');
 
+/**
+ * Em subpasta, os caminhos relativos do HTML passam a ser absolutos:
+ *   assets/css/styles.css  ->  /belo-horizonte/assets/css/styles.css
+ *
+ * Sem isto, quem abre a pagina SEM a barra final (/belo-horizonte) faz o
+ * navegador resolver os assets a partir da raiz do dominio — e, como o
+ * dominio pertence a outro site, a pagina carrega sem estilo nenhum.
+ * Ancoras (#analise) continuam relativas, entao a navegacao interna nao muda.
+ */
+function caminhosAbsolutos(arquivo, prefixo) {
+  const antes = fs.readFileSync(arquivo, 'utf8');
+  const depois = antes.replace(/(["'\s])assets\//g, '$1/' + prefixo + '/assets/');
+  fs.writeFileSync(arquivo, depois);
+  return (antes.match(/(["']|\s)assets\//g) || []).length;
+}
+
 function copiar(origem, destino) {
   fs.mkdirSync(destino, { recursive: true });
   let n = 0;
@@ -75,7 +91,10 @@ for (const slug of slugs) {
   const dados = calcular(carregar(slug).dados);
   const origem = path.join(raiz, 'publicado', slug);
   // no modo de uma unidade so, ela vai para a raiz e nao para uma subpasta
-  const n = copiar(origem, soUma ? SAIDA : path.join(SAIDA, dados.caminho));
+  const pastaDestino = soUma ? SAIDA : path.join(SAIDA, dados.caminho);
+  const n = copiar(origem, pastaDestino);
+  // no modo de unidade unica a pagina ja esta na raiz, os relativos bastam
+  if (!soUma) caminhosAbsolutos(path.join(pastaDestino, 'index.html'), dados.caminho);
 
   unidades.push(dados);
   console.log('  ' + (soUma ? '/' : '/' + dados.caminho).padEnd(17) + n + ' arquivos   ' + dados.unidade);
