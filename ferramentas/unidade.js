@@ -43,6 +43,35 @@ function carregar(slug) {
 }
 
 /**
+ * Momentos da jornada que variam de praca para praca: a tradicao de uma
+ * faculdade nao e a da outra. A unidade sobrescreve o que quiser em
+ * `momentos` no unidade.js; o resto continua sendo o da rede.
+ */
+const MOMENTOS_REDE = {
+  med2: {
+    img: 'mom-med-caminhada.webp',
+    w: 640, h: 427,
+    titulo: 'Caminhada Etílica',
+    texto: 'A tradição que coloca a turma inteira na rua.',
+    alt: 'Turma de Medicina comemorando dentro de um ônibus decorado durante a caminhada',
+  },
+  med3: {
+    img: 'mom-med-meio.webp',
+    w: 600, h: 400,
+    titulo: 'Meio Médico',
+    texto: 'O evento não oficial mais importante do curso.',
+    alt: 'Turma de Medicina reunida em frente ao painel do Meio Médico',
+  },
+  med4: {
+    img: 'mom-med-fotos.webp',
+    w: 640, h: 960,
+    titulo: 'Sessões de fotos',
+    texto: 'As recordações de cada fase.',
+    alt: 'Formanda de Medicina posando diante de neon com a palavra Medicina',
+  },
+};
+
+/**
  * Campos que o proprio build calcula a partir dos outros:
  *   caminho    pasta/URL da unidade no site publicado (default: o slug)
  *   urlPublica endereco final, quando a unidade tem urlBase
@@ -55,12 +84,20 @@ function calcular(dados) {
   const caminho = (dados.caminho || dados.slug || '').replace(/^\/+|\/+$/g, '');
   // nota da pesquisa: a da rede vale para quem nao informar a sua
   const nota = String(dados.nota || '4.6');
+
+  // Momentos da jornada que a unidade pode trocar. O que nao vier do
+  // unidade.js fica com o da rede. Ver MOMENTOS_REDE logo abaixo.
+  const momentos = {};
+  for (const [chave, padrao] of Object.entries(MOMENTOS_REDE)) {
+    momentos[chave] = { ...padrao, ...((dados.momentos || {})[chave] || {}) };
+  }
   const base = (dados.urlBase || '').replace(/\/+$/, '');
   const urlPublica = base ? base + '/' + caminho + '/' : '';
   return {
     ...dados,
     caminho,
     nota,
+    momentos,
     notaTexto: nota.replace('.', ','),
     urlPublica,
     ogImage: urlPublica ? urlPublica + 'assets/img/og-image.jpg' : 'assets/img/og-image.jpg',

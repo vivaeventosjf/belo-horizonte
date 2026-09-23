@@ -55,6 +55,26 @@ window.UNIDADE = {
   // Planilha "Leads VIVA Aracaju" (Apps Script) — criada em 22/09/2026
   webhookUrl: 'https://script.google.com/macros/s/AKfycbztJgefd0L9ep6Z3KjZEj3mGz--HHYIgnaDaWRZgioXrUe_AypEUxP6mKug2BxpjOWzeg/exec',
 
+  // Momentos da jornada de Medicina diferentes dos da rede.
+  // O que nao estiver aqui continua igual ao das outras unidades.
+  momentos: {
+    med2: {
+      img: 'mom-med-jaleco.webp',            // fica em unidades/aracaju/img/
+      titulo: 'Cerimônia do Jaleco',
+      texto: 'O rito que marca a entrada na prática médica.',
+      alt: 'Três estudantes de Medicina de jaleco branco sorrindo lado a lado',
+    },
+    med3: {
+      img: 'mom-med-meio.webp',              // foto própria, mesmo nome da rede
+      w: 640, h: 800,                        // retrato, e não a paisagem da rede
+      alt: 'Formanda de Medicina de jaleco da turma MED XIII em retrato de estúdio',
+    },
+    med4: {
+      img: 'mom-med-fotos.webp',             // foto própria, mesmo nome da rede
+      alt: 'Formanda de Medicina de jaleco e estetoscópio em retrato de estúdio',
+    },
+  },
+
   // Cidades atendidas pela unidade (aparecem no site e no formulário)
   // Área de atuação conforme a tabela da rede:
   //   próprias : Aracaju, São Cristóvão
