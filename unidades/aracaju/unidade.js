@@ -26,6 +26,10 @@ window.UNIDADE = {
 
   unidade: 'VIVA Eventos Aracaju',       // nome da unidade (rodapé, FAQ, lead)
 
+  // Nota exibida no bloco da pesquisa. Sem este campo, a unidade mostra a
+  // nota da rede (4.6). Ver a nota de rodapé daquele bloco no index.html.
+  nota: '4.9',
+
   // Título e descrição da página. No site estático entram no <head>;
   // no WordPress quem manda é o plugin de SEO, isto aqui vira só o rascunho.
   seo: {
@@ -42,7 +46,7 @@ window.UNIDADE = {
   slugWordpress: 'viva-festa-universitaria-bh',
 
   // Contatos da unidade (vazio = não aparece no site)   ← VALIDAR
-  endereco: '',                          // ex.: 'Av. Beira Mar, 0000 · Treze de Julho, Aracaju/SE'
+  endereco: 'Av. Mário Jorge Menezes Vieira, 2375 · Coroa do Meio, Aracaju/SE',
   whatsapp: '5583998837821',             // +55 83 99883-7821
   email: '',                             // ex.: 'aracaju@vivaeventos.com.br'
   instagram: '',                         // ex.: 'vivaeventosaracaju' (sem @)

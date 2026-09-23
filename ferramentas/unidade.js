@@ -48,15 +48,20 @@ function carregar(slug) {
  *   urlPublica endereco final, quando a unidade tem urlBase
  *   ogImage    imagem de compartilhamento — o Facebook e o WhatsApp exigem
  *              URL absoluta, senao o preview do link sai sem imagem
+ *   nota       nota da pesquisa; sem o campo na unidade, usa a da rede (4.6)
  *   tagsUrl    <link rel=canonical> e og:url, so quando ha urlBase
  */
 function calcular(dados) {
   const caminho = (dados.caminho || dados.slug || '').replace(/^\/+|\/+$/g, '');
+  // nota da pesquisa: a da rede vale para quem nao informar a sua
+  const nota = String(dados.nota || '4.6');
   const base = (dados.urlBase || '').replace(/\/+$/, '');
   const urlPublica = base ? base + '/' + caminho + '/' : '';
   return {
     ...dados,
     caminho,
+    nota,
+    notaTexto: nota.replace('.', ','),
     urlPublica,
     ogImage: urlPublica ? urlPublica + 'assets/img/og-image.jpg' : 'assets/img/og-image.jpg',
     tagsUrl: urlPublica
