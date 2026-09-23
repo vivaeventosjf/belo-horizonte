@@ -39,6 +39,7 @@ publicado/
 publicar/
 # blocos exportados a mao para repassar a quem publica
 conteudo-elementor-*.html
+regras-para-o-site-da-franquia.txt
 
 # O HTML intermediário dos anúncios é recriado pelo gerador.
 # Os PNG ficam no repositório: são a peça que vai para o anúncio.

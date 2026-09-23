@@ -48,7 +48,48 @@ e abra `http://localhost:8899/belohorizonte/`.
 4. O site sobe num endereço tipo `random-name-123.netlify.app`. Teste
    `/belohorizonte` e `/aracaju` por ali antes de mexer no domínio.
 
-## Apontar o domínio
+## O domínio já pertence a outro projeto
+
+`franquia.vivaeventos.com.br` é usado pela landing de **sócio-operador**, num
+projeto separado do Netlify. Um domínio só pode pertencer a um projeto, então
+não dá para apontá-lo também para este.
+
+A saída é aquele site **repassar** os caminhos das unidades para este. No
+`_redirects` do repositório dele:
+
+```
+/belo-horizonte/*  https://belo-horizonte.netlify.app/belo-horizonte/:splat  200
+/aracaju/*         https://belo-horizonte.netlify.app/aracaju/:splat         200
+/belo-horizonte    /belo-horizonte/                                          301!
+/aracaju           /aracaju/                                                 301!
+```
+
+O status **200** é o que importa: ele serve o conteúdo do outro site mantendo a
+URL `franquia.vivaeventos.com.br/belo-horizonte` na barra de endereço. Com 301
+o visitante seria jogado para o `.netlify.app`.
+
+O `netlify.js` gera essas linhas prontas em
+`regras-para-o-site-da-franquia.txt` a cada build — **refaça e recole quando
+entrar uma unidade nova**, senão ela responde 404 no domínio.
+
+Se o endereço `.netlify.app` deste projeto mudar, gere com o nome novo:
+
+```bash
+SITE_NETLIFY=outro-nome.netlify.app node ferramentas/netlify.js
+```
+
+⚠️ Este projeto precisa estar **público** para o repasse funcionar. Se estiver
+com proteção de senha (Site configuration › Access & security), o outro site
+recebe 401 e a página não abre para ninguém.
+
+### Alternativa: juntar os dois repositórios
+
+Em vez do repasse, as landings podem morar dentro do repositório que já serve o
+domínio. Some uma peça (não há dois projetos conversando), mas mistura duas
+coisas com ciclos de vida diferentes, e o build daquele site passa a ter que
+rodar o nosso. O repasse mantém os dois independentes.
+
+## Apontar o domínio (quando o domínio for livre)
 
 No Netlify, **Site configuration › Domain management › Add a domain**:
 `franquia.vivaeventos.com.br`.

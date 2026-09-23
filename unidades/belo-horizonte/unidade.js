@@ -11,7 +11,7 @@ window.UNIDADE = {
   // Endereco publico (Netlify). urlBase + caminho formam a URL final e
   // alimentam o <link rel="canonical">, o og:url e a imagem de compartilhamento.
   urlBase: 'https://franquia.vivaeventos.com.br',
-  caminho: 'belohorizonte',                 // pasta no site publicado -> /belohorizonte
+  caminho: 'belo-horizonte',             // pasta no site publicado -> /belo-horizonte
 
   // Como a região aparece no site
   nome: 'Belo Horizonte e Região',      // selo do topo e títulos

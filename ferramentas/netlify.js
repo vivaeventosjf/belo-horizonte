@@ -137,5 +137,33 @@ fs.writeFileSync(
   ].join('\n')
 );
 
+/* ---------- regras para o site que ja tem o dominio ---------- */
+// O dominio franquia.vivaeventos.com.br pertence a outro projeto do Netlify
+// (a landing de socio-operador), e o Netlify nao deixa dois projetos usarem o
+// mesmo dominio. A saida e aquele site repassar estes caminhos para este aqui:
+// com status 200 o conteudo aparece sob o dominio dele, sem mudar a URL.
+if (!soUma) {
+  const NL = String.fromCharCode(10);
+  const SITE = process.env.SITE_NETLIFY || 'belo-horizonte.netlify.app';
+  const proxy = unidades
+    .map((u) => '/' + u.caminho + '/*  https://' + SITE + '/' + u.caminho + '/:splat  200')
+    .concat(unidades.map((u) => '/' + u.caminho + '  /' + u.caminho + '/  301!'))
+    .join(NL);
+
+  fs.writeFileSync(path.join(SAIDA, '..', 'regras-para-o-site-da-franquia.txt'),
+    [
+      '# Cole estas linhas no _redirects do repositorio que serve',
+      '# franquia.vivaeventos.com.br (a landing de socio-operador).',
+      '# Sem elas, /' + unidades[0].caminho + ' devolve 404 naquele site.',
+      '#',
+      '# Gerado por ferramentas/netlify.js — refaca quando entrar unidade nova.',
+      '',
+      proxy,
+      '',
+    ].join(NL));
+  console.log('');
+  console.log('Regras de proxy  : regras-para-o-site-da-franquia.txt');
+}
+
 console.log('');
 console.log(unidades.length + ' unidade(s) em publicar/ — e esta a pasta que vai para o Netlify.');
