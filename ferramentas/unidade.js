@@ -46,9 +46,14 @@ function carregar(slug) {
  * Momentos da jornada que variam de praca para praca: a tradicao de uma
  * faculdade nao e a da outra. A unidade sobrescreve o que quiser em
  * `momentos` no unidade.js; o resto continua sendo o da rede.
+ *
+ * `foco` e o object-position da foto dentro do cartao. O cartao quase nunca
+ * tem a proporcao da imagem, entao com o padrao (center) o corte come topo e
+ * base em partes iguais — e em retrato isso corta a cabeca de quem posa.
  */
 const MOMENTOS_REDE = {
   med2: {
+    foco: 'center',
     img: 'mom-med-caminhada.webp',
     w: 640, h: 427,
     titulo: 'Caminhada Etílica',
@@ -56,6 +61,7 @@ const MOMENTOS_REDE = {
     alt: 'Turma de Medicina comemorando dentro de um ônibus decorado durante a caminhada',
   },
   med3: {
+    foco: 'center',
     img: 'mom-med-meio.webp',
     w: 600, h: 400,
     titulo: 'Meio Médico',
@@ -63,6 +69,7 @@ const MOMENTOS_REDE = {
     alt: 'Turma de Medicina reunida em frente ao painel do Meio Médico',
   },
   med4: {
+    foco: 'center',
     img: 'mom-med-fotos.webp',
     w: 640, h: 960,
     titulo: 'Sessões de fotos',

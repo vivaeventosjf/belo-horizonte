@@ -67,10 +67,12 @@ window.UNIDADE = {
     med3: {
       img: 'mom-med-meio.webp',              // foto própria, mesmo nome da rede
       w: 640, h: 800,                        // retrato, e não a paisagem da rede
+      foco: 'center top',                    // retrato: ancora no topo p/ não cortar a cabeça
       alt: 'Formanda de Medicina de jaleco da turma MED XIII em retrato de estúdio',
     },
     med4: {
       img: 'mom-med-fotos.webp',             // foto própria, mesmo nome da rede
+      foco: 'center top',                    // retrato: ancora no topo p/ não cortar a cabeça
       alt: 'Formanda de Medicina de jaleco e estetoscópio em retrato de estúdio',
     },
   },
