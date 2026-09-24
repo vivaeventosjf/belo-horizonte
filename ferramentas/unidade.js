@@ -4,6 +4,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const raiz = path.join(__dirname, '..');
 const BASE = path.join(raiz, 'base');
@@ -187,7 +188,51 @@ function montarHtml(entrada) {
     }
   );
 
+  html = versionarAssets(html, dados.slug);
+
   return { html, faltando };
+}
+
+/**
+ * Acrescenta ?v=<hash> aos assets locais do HTML.
+ *
+ * O site publica assets/* com Cache-Control immutable por um ano (ver
+ * publicar/_headers). Sem versao no endereco, quem ja visitou a pagina
+ * continuaria com o CSS e o JS antigos ate o cache vencer, e uma correcao
+ * nunca chegaria a essas pessoas. Com o hash do conteudo na query, o endereco
+ * muda junto com o arquivo: cache longo para o que nao mudou, atualizacao
+ * imediata para o que mudou.
+ */
+function versionarAssets(html, slug) {
+  const versoes = new Map();
+
+  const versao = (rel) => {
+    if (versoes.has(rel)) return versoes.get(rel);
+    let v = '';
+    try {
+      /* assets/js/unidade.js nao vem da base: e o arquivo da propria unidade,
+         copiado para la pelo build. E o que muda mais, entao precisa de versao
+         tanto quanto os outros. */
+      const origem = rel === 'assets/js/unidade.js' && slug
+        ? path.join(UNIDADES, slug, 'unidade.js')
+        : path.join(BASE, rel);
+      const conteudo = fs.readFileSync(origem);
+      v = crypto.createHash('sha1').update(conteudo).digest('hex').slice(0, 8);
+    } catch (err) {
+      /* Arquivo que nao existe na base (imagem propria da unidade, por
+         exemplo) fica sem versao: melhor que derrubar o build. */
+    }
+    versoes.set(rel, v);
+    return v;
+  };
+
+  return html.replace(
+    /(src|href)="(assets\/(?:js|css)\/[^"?#]+\.(?:js|css))"/g,
+    (todo, attr, rel) => {
+      const v = versao(rel);
+      return v ? attr + '="' + rel + '?v=' + v + '"' : todo;
+    }
+  );
 }
 
 module.exports = { raiz, BASE, UNIDADES, listar, carregar, valor, calcular, montarHtml };
