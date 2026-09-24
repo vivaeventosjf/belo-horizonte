@@ -441,6 +441,15 @@ function initWhatsappWidget() {
       console.error('[VIVA] erro ao registrar contato do WhatsApp', err);
     }
 
+    /* Tambem e Lead: a pessoa preencheu o formulario e virou contato no CRM,
+       so que pelo WhatsApp em vez da proposta. O content_name separa os dois
+       caminhos no Gerenciador sem precisar de dois eventos diferentes, que
+       dividiriam a conversao que o algoritmo otimiza. */
+    trackPixel('Lead', {
+      content_name: 'WhatsApp flutuante',
+      content_category: curso || '',
+    });
+
     if (typeof window.dataLayer !== 'undefined') {
       window.dataLayer.push({ event: 'whatsapp_flutuante', curso, regiao: SITE.nome });
     }
