@@ -312,12 +312,20 @@ function getUtms() {
  * instituicao) ja vai para o CRM pelo webhook.
  */
 function trackPixel(evento, parametros) {
-  if (typeof window.fbq !== 'function') return;
+  if (typeof window.fbq !== 'function') {
+    /* Sem pixel na unidade, ou bloqueador de anuncios derrubando o fbevents.js.
+       O aviso existe para nao confundir as duas causas na hora de conferir. */
+    console.warn('[VIVA] Meta Pixel indisponivel: evento ' + evento + ' nao foi enviado.'
+      + ' Se a unidade tem metaPixel configurado, provavelmente e bloqueador de anuncios.');
+    return;
+  }
   try {
     window.fbq('track', evento, parametros || {});
+    console.info('[VIVA] Meta Pixel: ' + evento, parametros || {});
   } catch (err) {
-    /* Bloqueador de anuncios derruba o fbq no meio: o envio do lead nao pode
-       falhar por causa da medicao. */
+    /* Bloqueador pode derrubar o fbq no meio: o envio do lead nao pode falhar
+       por causa da medicao. */
+    console.warn('[VIVA] Meta Pixel falhou no evento ' + evento, err);
   }
 }
 
@@ -416,6 +424,14 @@ function initWhatsappWidget() {
       + ' Quero falar sobre a formatura da minha turma.';
     const url = `https://wa.me/${onlyDigits(SITE.whatsapp)}?text=${encodeURIComponent(msg)}`;
 
+    /* Mesma regra do formulario de proposta: marca no envio das informacoes,
+       nao no que vem depois. O content_name separa os dois caminhos no
+       Gerenciador sem dividir a conversao que o algoritmo otimiza. */
+    trackPixel('Lead', {
+      content_name: 'WhatsApp flutuante',
+      content_category: curso || '',
+    });
+
     // abre antes do await para não ser bloqueado como popup
     const aba = window.open(url, '_blank', 'noopener');
     setOpen(false);
@@ -440,15 +456,6 @@ function initWhatsappWidget() {
     } catch (err) {
       console.error('[VIVA] erro ao registrar contato do WhatsApp', err);
     }
-
-    /* Tambem e Lead: a pessoa preencheu o formulario e virou contato no CRM,
-       so que pelo WhatsApp em vez da proposta. O content_name separa os dois
-       caminhos no Gerenciador sem precisar de dois eventos diferentes, que
-       dividiriam a conversao que o algoritmo otimiza. */
-    trackPixel('Lead', {
-      content_name: 'WhatsApp flutuante',
-      content_category: curso || '',
-    });
 
     if (typeof window.dataLayer !== 'undefined') {
       window.dataLayer.push({ event: 'whatsapp_flutuante', curso, regiao: SITE.nome });
@@ -677,15 +684,17 @@ function initForm() {
     btnSubmit.setAttribute('aria-busy', 'true');
     formError.hidden = true;
 
+    /* Antes do sendLead: o Lead e o envio das informacoes pela pessoa, e o
+       webhook e o que acontece depois. Se o registro no CRM demora ou falha,
+       a conversao ja aconteceu do lado de quem preencheu, e o Meta precisa
+       saber. */
+    trackPixel('Lead', {
+      content_name: 'Analise da turma',
+      content_category: data.curso || '',
+    });
+
     try {
       await sendLead(data);
-
-      /* Depois do sendLead de proposito: so conta como Lead o que realmente
-         entrou no CRM. */
-      trackPixel('Lead', {
-        content_name: 'Analise da turma',
-        content_category: data.curso || '',
-      });
 
       if (typeof window.dataLayer !== 'undefined') {
         window.dataLayer.push({
