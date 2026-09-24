@@ -53,6 +53,11 @@ window.UNIDADE = {
 
   // Para onde vão os leads (POST com JSON): Google Apps Script, Make, Zapier, RD Station...
   // Planilha "Leads VIVA Aracaju" (Apps Script) — criada em 22/09/2026
+  // Meta Pixel desta unidade. Cada unidade tem o seu: o pixel de uma nao
+  // pode receber o trafego da outra, senao publico e otimizacao se misturam.
+  // Vazio = a unidade sai sem pixel.
+  metaPixel: '1390583473232040',
+
   webhookUrl: 'https://script.google.com/macros/s/AKfycbztJgefd0L9ep6Z3KjZEj3mGz--HHYIgnaDaWRZgioXrUe_AypEUxP6mKug2BxpjOWzeg/exec',
 
   // Momentos da jornada de Medicina diferentes dos da rede.

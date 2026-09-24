@@ -303,6 +303,24 @@ function getUtms() {
   return out;
 }
 
+/**
+ * Evento do Meta Pixel. So dispara se a unidade tiver pixel configurado: sem
+ * isso, uma unidade sem metaPixel geraria erro no console a cada envio.
+ *
+ * Nunca manda dado do formulario para o Meta. O Pixel do Facebook nao aceita
+ * dado pessoal em parametro de evento, e o que o time precisa (nome, curso,
+ * instituicao) ja vai para o CRM pelo webhook.
+ */
+function trackPixel(evento, parametros) {
+  if (typeof window.fbq !== 'function') return;
+  try {
+    window.fbq('track', evento, parametros || {});
+  } catch (err) {
+    /* Bloqueador de anuncios derruba o fbq no meio: o envio do lead nao pode
+       falhar por causa da medicao. */
+  }
+}
+
 async function sendLead(data) {
   if (!SITE.webhookUrl) {
     console.warn('[VIVA] webhookUrl não configurado em unidades/<slug>/unidade.js. O lead não foi enviado a nenhum sistema.', data);
@@ -652,6 +670,13 @@ function initForm() {
 
     try {
       await sendLead(data);
+
+      /* Depois do sendLead de proposito: so conta como Lead o que realmente
+         entrou no CRM. */
+      trackPixel('Lead', {
+        content_name: 'Analise da turma',
+        content_category: data.curso || '',
+      });
 
       if (typeof window.dataLayer !== 'undefined') {
         window.dataLayer.push({

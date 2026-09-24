@@ -40,6 +40,9 @@ window.UNIDADE = {
   instagram: '',                         // ex.: 'vivaeventosbh' (sem @)
 
   // Para onde vão os leads (POST com JSON): Google Apps Script, Make, Zapier, RD Station...
+  // Meta Pixel desta unidade (vazio = sai sem pixel).   <- VALIDAR
+  metaPixel: '',
+
   webhookUrl: 'https://script.google.com/macros/s/AKfycbxP5A_Cp6rRwerHG-4ROZVg9QMXodCvouYITZToyGo8E2r_X9YrJJ5IrKS6lOzpNMcoTw/exec',
 
   // Cidades atendidas pela unidade (aparecem no site e no formulário)

@@ -86,6 +86,9 @@ const MOMENTOS_REDE = {
  *              URL absoluta, senao o preview do link sai sem imagem
  *   nota       nota da pesquisa; sem o campo na unidade, usa a da rede (4.6)
  *   tagsUrl    <link rel=canonical> e og:url, so quando ha urlBase
+ *   tagsPixel  codigo do Meta Pixel, so quando a unidade tem metaPixel. Cada
+ *              unidade tem o seu: o pixel de uma nao pode receber o trafego
+ *              da outra, senao o publico e a otimizacao se misturam
  */
 function calcular(dados) {
   const caminho = (dados.caminho || dados.slug || '').replace(/^\/+|\/+$/g, '');
@@ -114,7 +117,41 @@ function calcular(dados) {
           '  <meta property="og:url" content="' + urlPublica + '">',
         ].join(String.fromCharCode(10))
       : '  <!-- sem urlBase em unidade.js: canonical e og:url ficam de fora -->',
+    tagsPixel: codigoPixel(dados.metaPixel),
   };
+}
+
+/**
+ * Codigo do Meta Pixel da unidade. Sem o id, devolve um comentario: o
+ * marcador precisa de algum valor, senao o build acusa campo faltando.
+ *
+ * O id vai escapado por seguranca de sintaxe, mesmo vindo de arquivo nosso:
+ * um caractere solto aqui quebraria o <script> inteiro e derrubaria a pagina.
+ */
+function codigoPixel(id) {
+  const limpo = String(id || '').replace(/[^0-9]/g, '');
+  if (!limpo) {
+    return '  <!-- sem metaPixel em unidade.js: esta unidade nao tem pixel -->';
+  }
+  const L = String.fromCharCode(10);
+  return [
+    '  <!-- Meta Pixel -->',
+    '  <script>',
+    "  !function(f,b,e,v,n,t,s)",
+    "  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?",
+    "  n.callMethod.apply(n,arguments):n.queue.push(arguments)};",
+    "  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';",
+    "  n.queue=[];t=b.createElement(e);t.async=!0;",
+    "  t.src=v;s=b.getElementsByTagName(e)[0];",
+    "  s.parentNode.insertBefore(t,s)}(window, document,'script',",
+    "  'https://connect.facebook.net/en_US/fbevents.js');",
+    "  fbq('init', '" + limpo + "');",
+    "  fbq('track', 'PageView');",
+    '  </' + 'script>',
+    '  <noscript><img height="1" width="1" style="display:none" alt=""',
+    '  src="https://www.facebook.com/tr?id=' + limpo + '&ev=PageView&noscript=1"></noscript>',
+    '  <!-- Fim do Meta Pixel -->',
+  ].join(L);
 }
 
 /** Busca 'seo.titulo' dentro do objeto da unidade */
