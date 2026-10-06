@@ -44,8 +44,9 @@ window.UNIDADE = {
   // inteira. Vazio = a seção não aparece.   <- VALIDAR com a unidade
   videoYoutube: 'WhaDLrO3HTc',
 
-  // Meta Pixel desta unidade (vazio = sai sem pixel).   <- VALIDAR
-  metaPixel: '',
+  // Meta Pixel desta unidade. Cada unidade tem o seu: o pixel de uma nao
+  // pode receber o trafego da outra, senao publico e otimizacao se misturam.
+  metaPixel: '1021388314287547',
 
   webhookUrl: 'https://script.google.com/macros/s/AKfycbxP5A_Cp6rRwerHG-4ROZVg9QMXodCvouYITZToyGo8E2r_X9YrJJ5IrKS6lOzpNMcoTw/exec',
 
