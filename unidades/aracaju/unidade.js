@@ -33,9 +33,9 @@ window.UNIDADE = {
   // Título e descrição da página. No site estático entram no <head>;
   // no WordPress quem manda é o plugin de SEO, isto aqui vira só o rascunho.
   seo: {
-    titulo: 'Análise da formatura da sua turma | VIVA Eventos Aracaju',
-    descricao: 'Responda algumas perguntas sobre a sua turma e receba a análise de um especialista da VIVA Eventos Aracaju: em que ponto a formatura está, o que resolver agora e quais são os próximos passos. Aracaju e região.',
-    ogDescricao: 'Responda algumas perguntas rápidas e a equipe da VIVA Eventos Aracaju analisa o cenário da formatura da sua turma.',
+    titulo: 'Faça a formatura da sua turma com a VIVA | VIVA Eventos Aracaju',
+    descricao: 'Pré-eventos, sessões de fotos, colação e baile com a VIVA Eventos Aracaju: fundo prestado à vista da comissão, consultor fixo do começo ao fim e uma festa com a cara da turma. Fale com um consultor. Aracaju e região.',
+    ogDescricao: 'A formatura inteira resolvida num lugar só. Fale com um consultor da VIVA Eventos Aracaju e comece a formatura da sua turma.',
   },
 
   // Sufixo dos nomes de arquivo na Biblioteca de Mídia do WordPress.
@@ -53,6 +53,10 @@ window.UNIDADE = {
 
   // Para onde vão os leads (POST com JSON): Google Apps Script, Make, Zapier, RD Station...
   // Planilha "Leads VIVA Aracaju" (Apps Script) — criada em 22/09/2026
+  // Vídeo da seção "A VIVA por dentro". Só o id do YouTube, não a URL
+  // inteira. Vazio = a seção não aparece.   <- VALIDAR com a unidade
+  videoYoutube: 'WhaDLrO3HTc',
+
   // Meta Pixel desta unidade. Cada unidade tem o seu: o pixel de uma nao
   // pode receber o trafego da outra, senao publico e otimizacao se misturam.
   // Vazio = a unidade sai sem pixel.
@@ -61,28 +65,7 @@ window.UNIDADE = {
   webhookUrl: 'https://script.google.com/macros/s/AKfycbztJgefd0L9ep6Z3KjZEj3mGz--HHYIgnaDaWRZgioXrUe_AypEUxP6mKug2BxpjOWzeg/exec',
 
   // Momentos da jornada de Medicina diferentes dos da rede.
-  // O que nao estiver aqui continua igual ao das outras unidades.
-  momentos: {
-    med2: {
-      img: 'mom-med-jaleco.webp',            // fica em unidades/aracaju/img/
-      titulo: 'Cerimônia do Jaleco',
-      texto: 'O rito que marca a entrada na prática médica.',
-      alt: 'Três estudantes de Medicina de jaleco branco sorrindo lado a lado',
-    },
-    med3: {
-      img: 'mom-med-meio.webp',              // foto própria, mesmo nome da rede
-      w: 640, h: 800,                        // retrato, e não a paisagem da rede
-      foco: 'center top',                    // retrato: ancora no topo p/ não cortar a cabeça
-      alt: 'Formanda de Medicina de jaleco da turma MED XIII em retrato de estúdio',
-    },
-    med4: {
-      img: 'mom-med-fotos.webp',             // foto própria, mesmo nome da rede
-      foco: 'center top',                    // retrato: ancora no topo p/ não cortar a cabeça
-      alt: 'Formanda de Medicina de jaleco e estetoscópio em retrato de estúdio',
-    },
-  },
-
-  // Cidades atendidas pela unidade (aparecem no site e no formulário)
+// Cidades atendidas pela unidade (aparecem no site e no formulário)
   // Área de atuação conforme a tabela da rede:
   //   próprias : Aracaju, São Cristóvão
   //   cedidas  : Lagarto, Itabaiana

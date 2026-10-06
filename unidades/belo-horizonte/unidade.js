@@ -25,9 +25,9 @@ window.UNIDADE = {
   // Título e descrição da página. No site estático entram no <head>;
   // no WordPress quem manda é o plugin de SEO, isto aqui vira só o rascunho.
   seo: {
-    titulo: 'Análise da formatura da sua turma | VIVA Eventos BH',
-    descricao: 'Responda algumas perguntas sobre a sua turma e receba a análise de um especialista da VIVA Eventos BH: em que ponto a formatura está, o que resolver agora e quais são os próximos passos. Belo Horizonte e região.',
-    ogDescricao: 'Responda algumas perguntas rápidas e a equipe da VIVA Eventos BH analisa o cenário da formatura da sua turma.',
+    titulo: 'Faça a formatura da sua turma com a VIVA | VIVA Eventos BH',
+    descricao: 'Pré-eventos, sessões de fotos, colação e baile com a VIVA Eventos BH: fundo prestado à vista da comissão, consultor fixo do começo ao fim e uma festa com a cara da turma. Fale com um consultor. Belo Horizonte e região.',
+    ogDescricao: 'A formatura inteira resolvida num lugar só. Fale com um consultor da VIVA Eventos BH e comece a formatura da sua turma.',
   },
 
   // Sufixo dos nomes de arquivo na Biblioteca de Mídia do WordPress
@@ -40,6 +40,10 @@ window.UNIDADE = {
   instagram: '',                         // ex.: 'vivaeventosbh' (sem @)
 
   // Para onde vão os leads (POST com JSON): Google Apps Script, Make, Zapier, RD Station...
+  // Vídeo da seção "A VIVA por dentro". Só o id do YouTube, não a URL
+  // inteira. Vazio = a seção não aparece.   <- VALIDAR com a unidade
+  videoYoutube: 'WhaDLrO3HTc',
+
   // Meta Pixel desta unidade (vazio = sai sem pixel).   <- VALIDAR
   metaPixel: '',
 

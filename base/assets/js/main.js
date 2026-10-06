@@ -13,6 +13,7 @@ const SITE = {
   email: '',
   instagram: '',
   webhookUrl: '',
+  videoYoutube: '',
   cidades: [],
   instituicoes: [],
   ...(window.UNIDADE || window.REGIAO || {}),
@@ -28,9 +29,8 @@ const storage = {
   set(key, value) { try { localStorage.setItem(key, value); } catch { /* sem storage */ } },
 };
 
-const OUTRA_INSTITUICAO = 'Outra';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 // Rótulo mostrado nas listas quando a pessoa quer escrever o nome
-const OUTRA_INSTITUICAO_LABEL = 'Outra instituição (escrever)';
 
 const onlyDigits = (v) => String(v || '').replace(/\D/g, '');
 
@@ -75,20 +75,8 @@ function bindSiteConfig() {
       el.append(opt);
     });
   };
-  fillDatalist($('[data-regiao-cidades-lista]'), SITE.cidades);
-  fillDatalist($('[data-regiao-instituicoes]'), [OUTRA_INSTITUICAO_LABEL, ...SITE.instituicoes]);
+  fillDatalist($('[data-regiao-instituicoes]'), SITE.instituicoes);
 
-  const instSelect = $('[data-regiao-instituicoes-select]');
-  if (instSelect) {
-    [OUTRA_INSTITUICAO, ...SITE.instituicoes].forEach((item) => {
-      const opt = document.createElement('option');
-      opt.value = item;
-      opt.textContent = item === OUTRA_INSTITUICAO ? OUTRA_INSTITUICAO_LABEL : item;
-      instSelect.append(opt);
-    });
-  }
-  const cityInput = $('#f-cidade');
-  if (cityInput && SITE.cidadePrincipal) cityInput.placeholder = `Ex.: ${SITE.cidadePrincipal}`;
 
   const contacts = $('[data-footer-contacts]');
   if (contacts && !$$('li', contacts).some((li) => !li.hidden)) contacts.hidden = true;
@@ -105,37 +93,6 @@ function bindSiteConfig() {
 
   const year = $('#year');
   if (year) year.textContent = new Date().getFullYear();
-}
-
-/* ---------- Curso: Medicina x outros cursos ---------- */
-function setCourse(course, { fromSelect = false } = {}) {
-  if (course !== 'med' && course !== 'geral') return;
-  root.dataset.course = course;
-  storage.set('viva-course', course);
-
-  $$('[data-set-course]').forEach((btn) => {
-    btn.setAttribute('aria-pressed', String(btn.dataset.setCourse === course));
-  });
-
-  const select = $('#f-curso');
-  if (select && !fromSelect) {
-    if (course === 'med' && !select.value) select.value = 'Medicina';
-    if (course === 'geral' && select.value === 'Medicina') select.value = '';
-  }
-
-  $$('.moments').forEach((list) => { list.scrollLeft = 0; });
-  updateMomentArrows();
-}
-
-function initCourse() {
-  const params = new URLSearchParams(location.search);
-  const fromUrl = params.get('curso');
-  const initial = fromUrl === 'medicina' || fromUrl === 'med' ? 'med' : (storage.get('viva-course') || 'geral');
-  setCourse(initial);
-
-  $$('[data-set-course]').forEach((btn) => {
-    btn.addEventListener('click', () => setCourse(btn.dataset.setCourse));
-  });
 }
 
 /* ---------- Header / navegação ---------- */
@@ -181,33 +138,6 @@ function initReveal() {
   items.forEach((el) => io.observe(el));
 }
 
-/* ---------- Contadores ---------- */
-function initCounters() {
-  const counters = $$('.count');
-  const fmt = (n, dec) => n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-  if (reduceMotion) return;
-
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      const el = entry.target;
-      const to = parseFloat(el.dataset.to);
-      const dec = parseInt(el.dataset.decimals || '0', 10);
-      const start = performance.now();
-      const dur = 1400;
-      const tick = (now) => {
-        const t = Math.min(1, (now - start) / dur);
-        const eased = 1 - Math.pow(1 - t, 4);
-        el.textContent = fmt(to * eased, dec);
-        if (t < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-      io.unobserve(el);
-    });
-  }, { threshold: 0.6 });
-  counters.forEach((el) => io.observe(el));
-}
-
 /* ---------- Botões magnéticos ---------- */
 function initMagnetic() {
   if (reduceMotion || !window.matchMedia('(pointer: fine)').matches) return;
@@ -231,38 +161,6 @@ function initMagnetic() {
   });
 }
 
-/* ---------- Carrossel de momentos ---------- */
-function visibleMoments() {
-  return $$('.moments').find((list) => list.offsetParent !== null);
-}
-
-function updateMomentArrows() {
-  const list = visibleMoments();
-  const [prev, next] = $$('[data-scroll]');
-  if (!list || !prev) return;
-  const max = list.scrollWidth - list.clientWidth - 4;
-  prev.disabled = list.scrollLeft <= 4;
-  next.disabled = list.scrollLeft >= max;
-}
-
-function initMoments() {
-  $$('.moments').forEach((list) => {
-    $$('.moment', list).forEach((m, i) => m.style.setProperty('--k', i));
-    list.addEventListener('scroll', updateMomentArrows, { passive: true });
-  });
-  $$('[data-scroll]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const list = visibleMoments();
-      if (!list) return;
-      const card = $('.moment', list);
-      const step = card ? card.getBoundingClientRect().width + 14 : 300;
-      list.scrollBy({ left: step * 2 * Number(btn.dataset.scroll), behavior: reduceMotion ? 'auto' : 'smooth' });
-    });
-  });
-  window.addEventListener('resize', updateMomentArrows, { passive: true });
-  updateMomentArrows();
-}
-
 /* ---------- CTA fixo no mobile ---------- */
 function initMobileCta() {
   const bar = $('.mobile-cta');
@@ -277,16 +175,20 @@ function initMobileCta() {
 }
 
 /* ---------- Máscara de telefone (formulário e botão flutuante) ---------- */
+
+/** Formata o que foi digitado: (31) 98888-7777. Devolve a string, para quem
+ *  controla o próprio campo poder aplicar sem depender de listener. */
+function maskPhone(valor) {
+  const d = onlyDigits(valor).slice(0, 11);
+  if (d.length <= 2) return d;
+  const corte = d.length === 11 ? 7 : 6;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, corte)}-${d.slice(corte)}`;
+}
+
 function applyPhoneMask(input) {
   if (!input) return;
-  input.addEventListener('input', () => {
-    const d = onlyDigits(input.value).slice(0, 11);
-    const corte = d.length === 11 ? 7 : 6;
-    let out = d;
-    if (d.length > 2) out = `(${d.slice(0, 2)}) ${d.slice(2)}`;
-    if (d.length > 6) out = `(${d.slice(0, 2)}) ${d.slice(2, corte)}-${d.slice(corte)}`;
-    input.value = out;
-  });
+  input.addEventListener('input', () => { input.value = maskPhone(input.value); });
 }
 
 /* ---------- Envio para o CRM ---------- */
@@ -364,14 +266,6 @@ function initWhatsappWidget() {
 
   const CAMPOS = ['nome', 'email', 'whatsapp', 'cidade', 'instituicao', 'curso'];
   applyPhoneMask(form.elements.whatsapp);
-
-  // Escolher "Outra…" na lista limpa o campo para a pessoa escrever o nome
-  const inputInstituicao = form.elements.instituicao;
-  inputInstituicao.addEventListener('input', () => {
-    if (inputInstituicao.value !== OUTRA_INSTITUICAO_LABEL) return;
-    inputInstituicao.value = '';
-    inputInstituicao.placeholder = 'Digite o nome da faculdade';
-  });
 
   // Se a pessoa já preencheu antes, não pedimos de novo
   let saved = {};
@@ -464,284 +358,459 @@ function initWhatsappWidget() {
   });
 }
 
-/* ---------- Formulário em etapas ---------- */
+/* ---------- Formulário em perguntas ----------
+   Uma tela por vez, como o formulário de candidatura da franqueadora. O
+   formato troca um formulário longo, que a pessoa vê inteiro e desiste, por
+   perguntas que cabem numa tela e mostram o progresso.
+
+   Os nomes dos campos são os mesmos de antes de propósito: a planilha e o
+   Kommo leem por esse nome, e renomear aqui quebraria os dois.               */
 function initForm() {
-  const form = $('#lead-form');
-  if (!form) return;
+  const start = $('#quiz-start');
+  const card = $('#quiz-card');
+  const body = $('#quiz-body');
+  const foot = $('#quiz-foot');
+  const conta = $('#quiz-count');
+  const barra = $('#quiz-bar');
+  const erroEl = $('#quiz-erro');
+  const anuncio = $('#quiz-announcer');
+  if (!start || !card || !body) return;
 
-  const steps = $$('.form-step', form);
-  const btnPrev = $('[data-prev]', form);
-  const btnNext = $('[data-next]', form);
-  const btnSubmit = $('[data-submit]', form);
-  const bar = $('.fp-bar span', form);
-  const labels = $$('.fp-labels span', form);
-  const announcer = $('#step-announcer');
-  const formError = $('#form-error');
-  const success = $('#form-success');
-  let current = 0;
+  /* Endereços que marcam o começo e o fim do formulário. Servem para montar
+     conversão personalizada por URL no Gerenciador de Anúncios, sem depender
+     de evento no pixel: /#formulario quando a pessoa começa a responder e
+     /#obrigado quando ela envia. */
+  const HASH_INICIO = '#formulario';
+  const HASH_FIM = '#obrigado';
 
-  // Previsão de formatura: próximos semestres
-  const selFormatura = $('#f-formatura');
-  const now = new Date();
-  let year = now.getFullYear();
-  let sem = now.getMonth() < 6 ? 1 : 2;
-  for (let i = 0; i < 14; i++) {
-    const opt = document.createElement('option');
-    opt.textContent = `${year}.${sem} (${sem === 1 ? '1º' : '2º'} semestre)`;
-    opt.value = `${year}.${sem}`;
-    selFormatura.append(opt);
-    if (sem === 2) { sem = 1; year++; } else { sem = 2; }
+  function marcarUrl(hash) {
+    try {
+      if (window.history && window.history.pushState) {
+        window.history.pushState({ etapa: hash }, '', hash);
+      } else {
+        location.hash = hash;
+      }
+    } catch (err) {
+      /* Navegador antigo: segue sem mexer na URL. A medição se perde, o
+         formulário não. */
+    }
   }
 
-  // Curso do select sincroniza com o site
-  const selCurso = $('#f-curso');
-  selCurso.addEventListener('change', () => {
-    if (selCurso.value === 'Medicina') setCourse('med', { fromSelect: true });
-    else if (selCurso.value && root.dataset.course === 'med') setCourse('geral', { fromSelect: true });
-  });
-  if (root.dataset.course === 'med' && !selCurso.value) selCurso.value = 'Medicina';
+  const resp = {};
+  let atual = 0;
+  let terminado = false;
+  let parcialEnviado = false;
 
-  // Instituição: "Outra" abre campo para digitar
-  const selInst = $('#f-instituicao');
-  const fieldOutra = $('#field-instituicao-outra');
-  selInst.addEventListener('change', () => {
-    const outra = selInst.value === OUTRA_INSTITUICAO;
-    fieldOutra.hidden = !outra;
-    if (outra) $('#f-instituicao-outra').focus();
-    else showError('instituicao_outra', '');
-  });
-
-  // Máscara de telefone
-  applyPhoneMask($('#f-whatsapp'));
-
-  // UTMs e página de origem
-  const params = new URLSearchParams(location.search);
-  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach((key) => {
-    const stored = storage.get(`viva-${key}`);
-    const value = params.get(key) || stored || '';
-    if (params.get(key)) storage.set(`viva-${key}`, params.get(key));
-    form.elements[key].value = value;
-  });
-  form.elements.pagina.value = location.href.split('#')[0];
-
-  // Validação
-  const rules = {
-    nome: (v) => (v.trim().split(/\s+/).length >= 2 ? '' : 'Digite nome e sobrenome.'),
-    whatsapp: (v) => {
-      const d = onlyDigits(v);
-      return d.length === 11 || d.length === 10 ? '' : 'Digite um WhatsApp com DDD.';
+  /* Cada tela pode ter mais de um campo: agrupar o que a pessoa responde de
+     uma vez só evita telas demais, que é o que faz abandonar. */
+  const TELAS = [
+    {
+      titulo: 'Primeiro, como a gente fala com você?',
+      dica: 'Sem ligação surpresa: o primeiro contato é no WhatsApp que você informar.',
+      campos: [
+        { id: 'nome', tipo: 'texto', rotulo: 'Seu nome', placeholder: 'Nome completo', autocomplete: 'name' },
+        { id: 'whatsapp', tipo: 'telefone', rotulo: 'WhatsApp', placeholder: '(00) 00000-0000' },
+        { id: 'email', tipo: 'email', rotulo: 'E-mail', placeholder: 'voce@email.com', autocomplete: 'email' },
+      ],
     },
-    email: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? '' : 'Digite um e-mail válido.'),
-    papel: (v) => (v ? '' : 'Escolha uma opção.'),
-    curso: (v) => (v ? '' : 'Selecione o curso.'),
-    instituicao_lista: (v) => (v ? '' : 'Selecione a instituição.'),
-    instituicao_outra: (v) => (
-      form.elements.instituicao_lista.value === OUTRA_INSTITUICAO && v.trim().length < 2
-        ? 'Digite o nome da instituição.'
-        : ''
-    ),
-    cidade: (v) => (v.trim().length >= 2 ? '' : 'Informe a cidade.'),
-    formatura: (v) => (v ? '' : 'Selecione a previsão.'),
-    formandos: (v) => {
-      const n = parseInt(v, 10);
-      return Number.isFinite(n) && n >= 5 && n <= 3000 ? '' : 'Digite o número aproximado de formandos.';
+    {
+      titulo: 'Qual é o seu papel na turma?',
+      campos: [
+        { id: 'papel', tipo: 'escolha', opcoes: [
+          'Faço parte da comissão',
+          'Estou ajudando a montar a comissão',
+          'Sou formando(a)',
+        ] },
+      ],
     },
-    comissao: (v) => (v ? '' : 'Escolha uma opção.'),
-    fundo: (v) => (v ? '' : 'Escolha uma opção.'),
-    empresas: (v) => (v ? '' : 'Escolha uma opção.'),
-  };
+    {
+      titulo: 'De qual curso e faculdade é a turma?',
+      campos: [
+        { id: 'curso', tipo: 'texto', rotulo: 'Curso', placeholder: 'Ex.: Enfermagem' },
+        { id: 'instituicao', tipo: 'texto', rotulo: 'Faculdade', placeholder: 'Nome da faculdade' },
+      ],
+    },
+    {
+      titulo: 'Onde a turma estuda e quando se forma?',
+      campos: [
+        { id: 'cidade', tipo: 'texto', rotulo: 'Cidade',
+          placeholder: () => `Ex.: ${SITE.cidadePrincipal || 'sua cidade'}` },
+        { id: 'formatura', tipo: 'escolha', rotulo: 'Quando se formam', opcoes: [
+          'Em menos de 6 meses',
+          'Daqui a 6 meses a 1 ano',
+          'Daqui a 1 a 2 anos',
+          'Daqui a mais de 2 anos',
+          'Ainda não sabemos',
+        ] },
+      ],
+    },
+    {
+      titulo: 'Quantos formandos tem a turma?',
+      dica: 'Uma estimativa já serve. O tamanho da turma muda bastante a proposta.',
+      campos: [
+        { id: 'formandos', tipo: 'numero', placeholder: 'Ex.: 90', min: 5, max: 3000 },
+      ],
+    },
+    {
+      titulo: 'Em que pé está a organização?',
+      campos: [
+        { id: 'comissao', tipo: 'escolha', rotulo: 'A turma já tem comissão?', opcoes: [
+          'Sim, já temos comissão',
+          'Estamos montando agora',
+          'Ainda não temos comissão',
+        ] },
+        { id: 'empresas', tipo: 'escolha', rotulo: 'Já conversaram com outras empresas?', opcoes: [
+          'Sim, já recebemos propostas',
+          'Estamos começando a pesquisar',
+          'Ainda não pesquisamos',
+        ] },
+      ],
+    },
+  ];
 
-  function fieldValue(name) {
-    const el = form.elements[name];
-    if (!el) return '';
-    if (el instanceof RadioNodeList) return el.value;
-    return el.value;
+  /* ---------- campos visíveis ---------- */
+
+  function camposDaTela(tela) {
+    return tela.campos;
   }
 
-  function showError(name, message) {
-    const errEl = $(`#e-${name}`, form);
-    const input = form.elements[name];
-    const first = input instanceof RadioNodeList ? input[0] : input;
-    const field = first && first.closest('.field');
-    if (errEl) errEl.textContent = message;
-    if (field) field.classList.toggle('has-error', Boolean(message));
-    const targets = input instanceof RadioNodeList ? Array.from(input) : [input];
-    targets.forEach((t) => {
-      if (!t) return;
-      t.setAttribute('aria-invalid', message ? 'true' : 'false');
-      if (errEl) t.setAttribute('aria-describedby', errEl.id);
+  function respondido(campo) {
+    const v = resp[campo.id];
+    if (campo.opcional) return true;
+    if (campo.tipo === 'varias') return Array.isArray(v) && v.length > 0;
+    if (campo.tipo === 'numero') return v !== undefined && String(v).trim() !== '' && Number(v) >= (campo.min || 1);
+    if (campo.tipo === 'email') return EMAIL_RE.test(String(v || '').trim());
+    if (campo.tipo === 'telefone') return onlyDigits(v || '').length >= 10;
+    return String(v || '').trim().length > 1;
+  }
+
+  function telaCompleta(i) {
+    return camposDaTela(TELAS[i]).every(respondido);
+  }
+
+  /* ---------- desenho ---------- */
+
+  function texto(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  function valorOu(v) { return typeof v === 'function' ? v() : v; }
+
+  function desenharCampo(campo) {
+    const rot = campo.rotulo ? `<span class="quiz-rot">${texto(campo.rotulo)}</span>` : '';
+    const v = resp[campo.id];
+
+    if (campo.tipo === 'escolha' || campo.tipo === 'varias') {
+      const varias = campo.tipo === 'varias';
+      const opcoes = valorOu(campo.opcoes).map((op) => {
+        const marcado = varias ? (Array.isArray(v) && v.indexOf(op) >= 0) : v === op;
+        return `<button type="button" class="quiz-opt${marcado ? ' selected' : ''}"
+          data-campo="${texto(campo.id)}" data-valor="${texto(op)}" data-varias="${varias}"
+          aria-pressed="${marcado}"><span class="quiz-marca"></span><span>${texto(op)}</span></button>`;
+      }).join('');
+      return `<div class="quiz-campo">${rot}<div class="quiz-options${varias ? ' quiz-options-varias' : ''}">${opcoes}</div></div>`;
+    }
+
+    const tipos = { texto: 'text', numero: 'number', email: 'email', telefone: 'tel' };
+    const extra = [
+      campo.lista ? ` list="${texto(campo.lista)}"` : '',
+      campo.autocomplete ? ` autocomplete="${texto(campo.autocomplete)}"` : ' autocomplete="off"',
+      campo.tipo === 'numero' ? ` inputmode="numeric" min="${campo.min}" max="${campo.max}"` : '',
+      campo.tipo === 'telefone' ? ' inputmode="numeric"' : '',
+    ].join('');
+
+    return `<div class="quiz-campo">${rot}<input class="quiz-input" type="${tipos[campo.tipo]}"
+      data-campo="${texto(campo.id)}" placeholder="${texto(valorOu(campo.placeholder) || '')}"
+      value="${texto(v || '')}"${extra}></div>`;
+  }
+
+  function desenhar(direcao) {
+    if (terminado) return;
+    const tela = TELAS[atual];
+
+    let html = `<h3 class="quiz-q">${texto(tela.titulo)}</h3>`;
+    if (tela.dica) html += `<p class="quiz-hint">${texto(tela.dica)}</p>`;
+    html += camposDaTela(tela).map(desenharCampo).join('');
+    body.innerHTML = html;
+
+    body.classList.remove('quiz-anim', 'quiz-anim-back');
+    void body.offsetWidth;
+    body.classList.add(direcao === 'voltar' ? 'quiz-anim-back' : 'quiz-anim');
+
+    ligarCampos();
+    desenharRodape();
+    atualizarProgresso();
+    esconderErro();
+
+    const primeiro = body.querySelector('.quiz-input');
+    if (primeiro && atual > 0) {
+      try { primeiro.focus({ preventScroll: true }); } catch (err) { /* navegador antigo */ }
+    }
+  }
+
+  function ligarCampos() {
+    $$('.quiz-input', body).forEach((el) => {
+      const id = el.dataset.campo;
+      const campo = TELAS[atual].campos.find((c) => c.id === id);
+
+      el.addEventListener('input', () => {
+        if (campo && campo.tipo === 'telefone') el.value = maskPhone(el.value);
+        resp[id] = el.value;
+        atualizarBotao();
+      });
+
+      el.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (telaCompleta(atual)) avancar();
+      });
+    });
+
+    $$('.quiz-opt', body).forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.campo;
+        const val = btn.dataset.valor;
+
+        if (btn.dataset.varias === 'true') {
+          const lista = Array.isArray(resp[id]) ? resp[id] : [];
+          const i = lista.indexOf(val);
+          if (i >= 0) lista.splice(i, 1); else lista.push(val);
+          resp[id] = lista;
+          btn.classList.toggle('selected', lista.indexOf(val) >= 0);
+          btn.setAttribute('aria-pressed', String(lista.indexOf(val) >= 0));
+        } else {
+          resp[id] = val;
+          $$(`.quiz-opt[data-campo="${id}"]`, body).forEach((o) => {
+            const marcado = o === btn;
+            o.classList.toggle('selected', marcado);
+            o.setAttribute('aria-pressed', String(marcado));
+          });
+        }
+        atualizarBotao();
+      });
     });
   }
 
-  function validateStep(index) {
-    const names = new Set($$('[name]', steps[index]).map((el) => el.name).filter((n) => rules[n]));
-    let firstInvalid = null;
-    names.forEach((name) => {
-      const el = form.elements[name];
-      const msg = rules[name](fieldValue(name), el);
-      showError(name, msg);
-      if (msg && !firstInvalid) firstInvalid = el instanceof RadioNodeList ? el[0] : el;
-    });
-    if (firstInvalid) firstInvalid.focus({ preventScroll: false });
-    return !firstInvalid;
+  function desenharRodape() {
+    const temVoltar = atual > 0;
+    const ultima = atual === TELAS.length - 1;
+    foot.className = temVoltar ? 'quiz-foot' : 'quiz-foot only-next';
+    foot.innerHTML =
+      (temVoltar ? '<button type="button" class="quiz-back">Voltar</button>' : '') +
+      `<button type="button" class="quiz-next"${telaCompleta(atual) ? '' : ' disabled'}>
+        <span class="btn-label">${ultima ? 'Falar com um consultor' : 'Continuar'}</span>
+        <span class="btn-loading" aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>`;
+
+    const voltar = foot.querySelector('.quiz-back');
+    if (voltar) voltar.addEventListener('click', () => { if (atual) { atual--; desenhar('voltar'); } });
+    foot.querySelector('.quiz-next').addEventListener('click', avancar);
   }
 
-  // Limpa erro enquanto a pessoa corrige
-  form.addEventListener('input', (e) => {
-    const name = e.target.name;
-    if (!rules[name]) return;
-    const field = e.target.closest('.field');
-    if (field && field.classList.contains('has-error')) {
-      showError(name, rules[name](fieldValue(name), form.elements[name]));
-    }
-  });
-  form.addEventListener('change', (e) => {
-    const name = e.target.name;
-    if (rules[name] && (e.target.type === 'radio' || e.target.type === 'checkbox' || e.target.tagName === 'SELECT')) {
-      showError(name, rules[name](fieldValue(name), form.elements[name]));
-    }
-  });
-
-  function goTo(index) {
-    steps[current].classList.remove('is-active');
-    steps[current].hidden = true;
-    current = index;
-    steps[current].hidden = false;
-    steps[current].classList.add('is-active');
-
-    btnPrev.hidden = current === 0;
-    btnNext.hidden = current === steps.length - 1;
-    btnSubmit.hidden = current !== steps.length - 1;
-    bar.style.transform = `scaleX(${(current + 1) / steps.length})`;
-    labels.forEach((l, i) => l.classList.toggle('is-active', i <= current));
-    announcer.textContent = `Etapa ${current + 1} de ${steps.length}: ${$('legend', steps[current]).textContent}`;
-    formError.hidden = true;
-
-    const top = form.getBoundingClientRect().top;
-    if (top < 80) form.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    const firstInput = $('input:not([type=hidden]), select, textarea', steps[current]);
-    if (firstInput && firstInput.type !== 'radio') firstInput.focus({ preventScroll: true });
+  function atualizarBotao() {
+    const btn = foot.querySelector('.quiz-next');
+    if (btn) btn.disabled = !telaCompleta(atual);
   }
 
-  btnNext.addEventListener('click', () => {
-    if (validateStep(current)) goTo(current + 1);
-  });
-  btnPrev.addEventListener('click', () => goTo(current - 1));
-
-  // Enter avança de etapa em vez de enviar
-  form.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && current < steps.length - 1) {
-      e.preventDefault();
-      btnNext.click();
+  function atualizarProgresso() {
+    if (terminado) {
+      conta.textContent = 'Enviado';
+      barra.style.width = '100%';
+      return;
     }
-  });
+    conta.textContent = `Pergunta ${atual + 1} de ${TELAS.length}`;
+    barra.style.width = Math.max((atual / TELAS.length) * 100, 5) + '%';
+    if (anuncio) anuncio.textContent = `Pergunta ${atual + 1} de ${TELAS.length}: ${TELAS[atual].titulo}`;
+  }
 
-  function collect() {
-    const fd = new FormData(form);
-    const data = {};
-    fd.forEach((value, key) => {
-      if (key === 'prioridades') (data.prioridades ||= []).push(value);
-      else data[key] = value;
-    });
-    data.prioridades = data.prioridades || [];
-    data.instituicao = data.instituicao_lista === OUTRA_INSTITUICAO
-      ? (data.instituicao_outra || '').trim()
-      : data.instituicao_lista;
-    data.instituicao_digitada = data.instituicao_lista === OUTRA_INSTITUICAO;
-    delete data.instituicao_lista;
-    delete data.instituicao_outra;
-    data.whatsapp_digitos = `55${onlyDigits(data.whatsapp)}`;
+  function mostrarErro(msg) { erroEl.textContent = msg; erroEl.hidden = false; }
+  function esconderErro() { erroEl.hidden = true; }
+
+  /* ---------- navegação ---------- */
+
+  function avancar() {
+    if (!telaCompleta(atual)) {
+      const falta = camposDaTela(TELAS[atual]).find((c) => !respondido(c));
+      mostrarErro(falta && falta.tipo === 'email'
+        ? 'Confira o e-mail: parece incompleto.'
+        : 'Preencha para continuar.');
+      return;
+    }
+    if (atual === TELAS.length - 1) { enviar(); return; }
+    atual++;
+    desenhar();
+  }
+
+  /* ---------- dados ---------- */
+
+  function montar() {
+    const data = { ...resp };
+    data.instituicao = (resp.instituicao || '').trim();
+    data.whatsapp_digitos = `55${onlyDigits(resp.whatsapp || '')}`;
     data.unidade = SITE.unidade;
     data.regiao = SITE.nome;
     data.regiao_slug = SITE.slug || '';
+    data.pagina = location.href.split('#')[0];
     data.enviado_em = new Date().toISOString();
-    data.origem = 'formulario_analise';
-    return data;
+    data.origem = 'formulario_consultor';
+    return { ...data, ...getUtms() };
   }
 
-  function whatsappMessage(d) {
-    return [
-      `Olá, ${SITE.unidade}! Sou ${d.nome} e pedi a análise da formatura da minha turma pelo site.`,
-      '',
-      `Curso: ${d.curso}`,
-      `Instituição: ${d.instituicao} (${d.cidade})`,
-      `Formatura prevista: ${d.formatura}`,
-      `Formandos: cerca de ${d.formandos}`,
-      `Comissão: ${d.comissao}`,
-      `Fundo: ${d.fundo}`,
-      `Empresas: ${d.empresas}`,
-      `Meu papel: ${d.papel}`,
-      d.prioridades.length ? `Queremos resolver: ${d.prioridades.join(', ')}` : '',
-    ].filter(Boolean).join('\n');
+  /* Quem começou a responder e foi embora não se perde: assim que o WhatsApp
+     estiver completo, o lead parcial é gravado. É a mesma ideia do formulário
+     da franqueadora, onde o parcial virou boa parte dos contatos. */
+  function enviarParcial() {
+    if (parcialEnviado || terminado) return;
+    if (onlyDigits(resp.whatsapp || '').length < 10) return;
+    parcialEnviado = true;
+    const corpo = JSON.stringify({ ...montar(), origem: 'formulario_parcial' });
+    try {
+      if (navigator.sendBeacon && SITE.webhookUrl) {
+        navigator.sendBeacon(SITE.webhookUrl, new Blob([corpo], { type: 'text/plain;charset=UTF-8' }));
+      }
+    } catch (err) { /* o envio completo ainda pode acontecer */ }
   }
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!validateStep(current)) return;
+  async function enviar() {
+    const btn = foot.querySelector('.quiz-next');
+    const data = montar();
 
-    const data = collect();
-    form.classList.add('is-loading');
-    btnSubmit.setAttribute('aria-busy', 'true');
-    formError.hidden = true;
+    card.classList.add('is-loading');
+    if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
+    esconderErro();
 
-    /* Antes do sendLead: o Lead e o envio das informacoes pela pessoa, e o
-       webhook e o que acontece depois. Se o registro no CRM demora ou falha,
-       a conversao ja aconteceu do lado de quem preencheu, e o Meta precisa
-       saber. */
-    trackPixel('Lead', {
-      content_name: 'Analise da turma',
-      content_category: data.curso || '',
-    });
+    /* Antes do envio ao CRM: a conversão é a pessoa mandar as informações. */
+    trackPixel('Lead', { content_name: 'Formulario da turma', content_category: data.curso || '' });
 
     try {
       await sendLead(data);
-
-      if (typeof window.dataLayer !== 'undefined') {
-        window.dataLayer.push({
-          event: 'analise_turma',
-          curso: data.curso,
-          comissao: data.comissao,
-          fundo: data.fundo,
-          regiao: data.regiao,
-        });
-      }
-
-      $('#success-name').textContent = data.nome.trim().split(/\s+/)[0];
-      const turma = `${data.curso} · ${data.instituicao}`;
-      $('#success-text').textContent =
-        `Recebemos as informações da turma de ${turma}. Um especialista da ${SITE.unidade} vai analisar o cenário de vocês e entrar em contato com as orientações.`;
-
-      const waBtn = $('#success-whatsapp');
-      if (SITE.whatsapp) {
-        waBtn.href = `https://wa.me/${onlyDigits(SITE.whatsapp)}?text=${encodeURIComponent(whatsappMessage(data))}`;
-        waBtn.hidden = false;
-        $('#success-note').hidden = false;
-      }
-
-      form.hidden = true;
-      success.hidden = false;
-      success.focus();
+      parcialEnviado = true;
+      concluir(data);
     } catch (err) {
-      console.error('[VIVA] erro ao enviar lead', err);
-      formError.textContent = SITE.whatsapp
-        ? 'Não conseguimos enviar agora. Tente de novo em instantes ou fale direto com a gente pelo WhatsApp.'
-        : 'Não conseguimos enviar agora. Verifique sua conexão e tente de novo.';
-      formError.hidden = false;
+      console.error('[VIVA] erro ao enviar o formulário', err);
+      mostrarErro('Não conseguimos enviar agora. Tente de novo em instantes ou fale direto no WhatsApp.');
+      if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); }
     } finally {
-      form.classList.remove('is-loading');
-      btnSubmit.removeAttribute('aria-busy');
+      card.classList.remove('is-loading');
     }
+  }
+
+  function concluir(data) {
+    terminado = true;
+    marcarUrl(HASH_FIM);
+    const primeiroNome = (data.nome || '').trim().split(/\s+/)[0] || 'tudo certo';
+    const turma = [data.curso, data.instituicao].filter(Boolean).join(' · ');
+
+    let html = `<div class="quiz-done">
+      <span class="success-icon"><svg class="icon"><use href="#i-check"/></svg></span>
+      <h3>Recebemos, ${texto(primeiroNome)}!</h3>
+      <p>As informações da turma${turma ? ` de ${texto(turma)}` : ''} chegaram para a
+         ${texto(SITE.unidade)}. Um consultor vai falar com você pelo WhatsApp
+         <strong>${texto(data.whatsapp || '')}</strong>.</p>
+      <div class="quiz-next-steps">
+        <h4>O que acontece agora</h4>
+        <ul>
+          <li><b>1</b><span>Um consultor da unidade entra em contato para entender o que a turma quer.</span></li>
+          <li><b>2</b><span>Vocês veem como a VIVA faz cada parte da formatura.</span></li>
+          <li><b>3</b><span>A proposta sai conversada, por escrito, sem compromisso de fechar.</span></li>
+        </ul>
+      </div>`;
+
+    if (SITE.whatsapp) {
+      const msg = `Olá, ${SITE.unidade}! Sou ${data.nome}${turma ? `, da turma de ${turma}` : ''}.`
+        + ' Acabei de enviar as informações da minha turma pelo site.';
+      html += `<a class="btn btn-orange" href="https://wa.me/${onlyDigits(SITE.whatsapp)}?text=${encodeURIComponent(msg)}"
+        target="_blank" rel="noopener"><svg class="icon"><use href="#i-chat"/></svg> Falar agora no WhatsApp</a>
+        <p class="success-note">Já vai com o resumo da sua turma escrito. É só enviar.</p>`;
+    }
+    html += '</div>';
+
+    body.innerHTML = html;
+    body.classList.remove('quiz-anim', 'quiz-anim-back');
+    void body.offsetWidth;
+    body.classList.add('quiz-anim');
+    foot.innerHTML = '';
+    foot.className = 'quiz-foot';
+    atualizarProgresso();
+    esconderErro();
+
+    if (typeof window.dataLayer !== 'undefined') {
+      window.dataLayer.push({
+        event: 'formulario_turma',
+        curso: data.curso,
+        comissao: data.comissao,
+        fundo: data.fundo,
+        regiao: data.regiao,
+      });
+    }
+    if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  /* ---------- abertura ---------- */
+
+  function abrir() {
+    if (!card.hidden) return;
+    start.hidden = true;
+    card.hidden = false;
+    desenhar();
+    marcarUrl(HASH_INICIO);
+
+    /* InitiateCheckout é o evento que o Meta entende como "começou o
+       preenchimento", e é o par natural do Lead lá no fim. */
+    trackPixel('InitiateCheckout', { content_name: 'Formulario da turma' });
+
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  $('#quiz-start-btn').addEventListener('click', abrir);
+
+  /* Os botões da página que apontam para o formulário já abrem a primeira
+     pergunta: um clique a menos entre a intenção e a resposta. */
+  $$('a[href="#proposta"]').forEach((a) => {
+    a.addEventListener('click', () => setTimeout(abrir, 320));
+  });
+
+  window.addEventListener('pagehide', enviarParcial);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') enviarParcial();
+  });
+}
+
+/* ---------- Vídeo sob demanda ----------
+   A seção só aparece se a unidade tiver vídeo. A fachada carrega apenas a
+   imagem; o player do YouTube entra no clique, porque o embed direto traz
+   centenas de KB que a maioria das visitas nunca usa. */
+function initVideo() {
+  const secao = $('#video');
+  const capa = $('#video-capa');
+  if (!secao || !capa) return;
+
+  const id = (SITE.videoYoutube || '').trim();
+  if (!id) return;
+  secao.hidden = false;
+
+  capa.addEventListener('click', () => {
+    const frame = document.createElement('iframe');
+    frame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0&autoplay=1`;
+    frame.title = `VIVA Eventos, conheça a ${SITE.unidade || 'VIVA'}`;
+    frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.allowFullscreen = true;
+
+    const caixa = document.createElement('div');
+    caixa.className = 'video-frame';
+    caixa.appendChild(frame);
+    capa.parentNode.replaceChild(caixa, capa);
   });
 }
 
 /* ---------- Início ---------- */
 bindSiteConfig();
-initCourse();
 initHeader();
 initReveal();
-initCounters();
 initMagnetic();
-initMoments();
 initMobileCta();
+initVideo();
 initWhatsappWidget();
 initForm();

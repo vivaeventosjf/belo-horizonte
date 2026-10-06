@@ -124,8 +124,6 @@ p { margin: 0; }
 }
 
 /* Curso: mostra/esconde conteúdo */
-html[data-course="geral"] [data-course-only="med"],
-html[data-course="med"] [data-course-only="geral"] { display: none !important; }
 
 /* ---------- Tipografia ---------- */
 h1 {
@@ -376,17 +374,6 @@ h3 {
   stroke-width: 2.5;
 }
 
-.course-switch {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 16px;
-  margin-top: 36px;
-  padding-top: 28px;
-  border-top: 1px solid var(--line);
-  max-width: 520px;
-}
-.course-switch-label { font-size: 0.9375rem; color: var(--ink-3); }
 
 .segmented {
   position: relative;
@@ -419,7 +406,6 @@ h3 {
   background: var(--ink);
   transition: transform 0.55s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
-html[data-course="med"] .segmented-thumb { transform: translateX(100%); }
 
 /* composição visual */
 .hero-visual {
@@ -1925,8 +1911,7 @@ html[data-course="med"] .segmented-thumb { transform: translateX(100%); }
 
   .hero-actions .btn { width: 100%; justify-content: space-between; }
   .hero-actions .btn-ghost { justify-content: center; }
-  .course-switch { flex-direction: column; align-items: stretch; }
-  .segmented button { padding: 10px 12px; }
+    .segmented button { padding: 10px 12px; }
 
   .hero-visual { aspect-ratio: auto; height: 560px; }
   .orbit-panel { width: 100%; height: 440px; }
@@ -1988,4 +1973,339 @@ html[data-course="med"] .segmented-thumb { transform: translateX(100%); }
   .marquee-track { animation: none; }
   .js .reveal { opacity: 1; transform: none; }
   .timeline::after { animation: none !important; transform: scaleY(1); }
+}
+
+
+/* =========================================================
+   Formulário em perguntas
+   Uma tela por vez. O card é o mesmo .form-shell de antes, então
+   herda posição e sombra; o que muda é o miolo.
+   ========================================================= */
+
+.quiz-start { text-align: center; padding: 18px 4px 6px; }
+.quiz-start-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.quiz-start-note { font-size: 0.9375rem; color: var(--ink-3); margin-bottom: 20px; }
+
+.quiz-top { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+.quiz-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.quiz-progress {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  overflow: hidden;
+}
+.quiz-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--orange), var(--orange-deep));
+  transition: width 0.38s var(--ease-out);
+}
+
+.quiz-q {
+  font-size: clamp(1.25rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.22;
+  margin-bottom: 8px;
+  text-wrap: balance;
+}
+.quiz-hint { margin: 0 0 18px; font-size: 0.9375rem; color: var(--ink-3); line-height: 1.5; }
+
+.quiz-campo + .quiz-campo { margin-top: 16px; }
+.quiz-rot {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.quiz-input {
+  width: 100%;
+  font: inherit;
+  font-size: 1rem;
+  padding: 14px 16px;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.quiz-input::placeholder { color: var(--ink-3); }
+.quiz-input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px var(--orange-50);
+}
+select.quiz-input { appearance: none; background-image: none; cursor: pointer; }
+
+.quiz-options { display: grid; gap: 8px; }
+.quiz-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 0.9375rem;
+  padding: 14px 16px;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.12s ease;
+}
+.quiz-opt:hover { border-color: var(--ink-3); background: var(--paper); }
+.quiz-opt:active { transform: scale(0.995); }
+.quiz-marca {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  position: relative;
+  transition: border-color 0.18s ease;
+}
+.quiz-opt.selected { border-color: var(--orange); background: var(--orange-50); }
+.quiz-opt.selected .quiz-marca { border-color: var(--orange); }
+.quiz-opt.selected .quiz-marca::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+/* Múltipla escolha: quadrado, para o formato dizer que dá para marcar vários */
+.quiz-options-varias .quiz-marca { border-radius: 6px; }
+.quiz-options-varias .quiz-opt.selected .quiz-marca::after { border-radius: 2px; }
+
+@media (min-width: 560px) {
+  .quiz-options-varias { grid-template-columns: 1fr 1fr; }
+}
+
+.quiz-erro {
+  margin: 14px 0 0;
+  font-size: 0.875rem;
+  color: var(--danger);
+}
+
+.quiz-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 24px;
+}
+.quiz-foot.only-next { justify-content: flex-end; }
+.quiz-back {
+  font: inherit;
+  font-size: 0.9375rem;
+  padding: 12px 18px;
+  color: var(--ink-2);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+.quiz-back:hover { border-color: var(--ink-3); color: var(--ink); }
+.quiz-next {
+  position: relative;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 26px;
+  color: #fff;
+  background: var(--orange);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s var(--ease-out);
+}
+.quiz-next:hover:not(:disabled) { background: var(--orange-deep); transform: translateY(-2px); }
+.quiz-next:disabled { background: var(--paper-2); color: var(--ink-3); cursor: not-allowed; }
+
+/* Animação de entrada: dá a sensação de avançar, e de voltar ao voltar. */
+.quiz-anim { animation: quizIn 0.34s var(--ease-out); }
+.quiz-anim-back { animation: quizInBack 0.34s var(--ease-out); }
+@keyframes quizIn {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes quizInBack {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quiz-anim, .quiz-anim-back { animation: none; }
+}
+
+/* Enquanto envia, o card inteiro espera */
+.quiz-card.is-loading { pointer-events: none; opacity: 0.7; }
+
+/* ---------- Conclusão ---------- */
+.quiz-done { text-align: center; }
+.quiz-done h3 {
+  font-size: clamp(1.375rem, 3vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 14px 0 10px;
+}
+.quiz-done p { color: var(--ink-2); line-height: 1.6; }
+.quiz-done .btn { margin-top: 20px; }
+
+.quiz-next-steps {
+  margin: 22px 0 0;
+  padding: 18px 20px;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.quiz-next-steps h4 {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.quiz-next-steps ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.quiz-next-steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 0.9375rem; }
+.quiz-next-steps li b {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #fff;
+}
+
+/* =========================================================
+   Vídeo sob demanda
+   A fachada carrega só a imagem; o player do YouTube entra
+   depois do clique, porque o embed direto traz centenas de KB
+   de JavaScript que a maioria das visitas nunca usa.
+   ========================================================= */
+.video-bloco {
+  display: grid;
+  gap: 28px;
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .video-bloco { grid-template-columns: 0.85fr 1.15fr; gap: 40px; }
+}
+.video-texto h2 { margin-bottom: 12px; }
+.video-texto p { color: var(--ink-2); line-height: 1.65; }
+
+.video-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--night);
+  box-shadow: var(--shadow-card);
+}
+.video-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.video-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+.video-capa { cursor: pointer; }
+.video-capa::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(26, 22, 19, 0.1), rgba(26, 22, 19, 0.45));
+  transition: background 0.25s ease;
+}
+.video-capa:hover::after { background: linear-gradient(180deg, rgba(26, 22, 19, 0.05), rgba(26, 22, 19, 0.3)); }
+.video-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+.video-play svg { width: 74px; height: auto; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.35)); }
+.video-play .play-bg { fill: var(--orange); }
+.video-play .play-arrow { fill: #fff; }
+.video-capa:hover .video-play svg { transform: scale(1.06); transition: transform 0.2s var(--ease-out); }
+
+/* =========================================================
+   A rede em números
+   Faixa curta logo abaixo do herói: responde "quem é essa
+   empresa" antes de a pessoa precisar perguntar.
+   ========================================================= */
+.rede { padding-top: clamp(40px, 6vw, 72px); padding-bottom: clamp(40px, 6vw, 72px); }
+.rede-intro {
+  max-width: 34ch;
+  margin: 0 auto 32px;
+  text-align: center;
+  font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.rede-numeros {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 760px) {
+  .rede-numeros { grid-template-columns: repeat(4, 1fr); }
+}
+.rede-numeros li {
+  text-align: center;
+  padding: 22px 14px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+.rede-numeros b {
+  display: block;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--orange-deep);
+}
+.rede-numeros span {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.875rem;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+
+/* O campo de texto longo acompanha o mesmo estilo dos demais */
+.quiz-area {
+  resize: vertical;
+  min-height: 92px;
+  line-height: 1.5;
+  font-family: inherit;
 }
