@@ -1679,6 +1679,14 @@ h3 {
   gap: 12px;
 }
 
+/* Verde do WhatsApp, um tom mais fechado que o #25D366 oficial para o texto
+   branco ficar legível em cima. O reconhecimento da cor é o que faz o botão
+   ser entendido antes de ser lido. */
+:root {
+  --wa: #1EB457;
+  --wa-escuro: #179647;
+}
+
 .wa-fab {
   display: inline-flex;
   align-items: center;
@@ -1686,17 +1694,26 @@ h3 {
   padding: 14px 20px;
   border: 0;
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--wa);
+  color: #fff;
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 18px 36px -16px rgba(29, 26, 23, 0.65);
+  box-shadow: 0 18px 36px -16px rgba(30, 180, 87, 0.6);
   transition: transform 0.45s var(--ease-out), background-color 0.25s;
 }
-.wa-fab:hover { background: #2B2622; transform: translateY(-2px); }
+.wa-fab:hover { background: var(--wa-escuro); transform: translateY(-2px); }
 .wa-fab:active { transform: scale(0.97); }
-.wa-fab .icon { width: 22px; height: 22px; color: var(--orange); }
+.wa-fab .icon { width: 22px; height: 22px; color: #fff; }
+
+/* Mesmo verde para os botões que abrem a conversa dentro da página */
+.btn-wa {
+  background: var(--wa);
+  color: #fff;
+  border-color: var(--wa);
+}
+.btn-wa:hover { background: var(--wa-escuro); border-color: var(--wa-escuro); }
+.btn-wa .icon { color: #fff; }
 
 .wa-panel {
   position: relative;

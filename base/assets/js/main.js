@@ -451,21 +451,6 @@ function initForm() {
         { id: 'formandos', tipo: 'numero', placeholder: 'Ex.: 90', min: 5, max: 3000 },
       ],
     },
-    {
-      titulo: 'Em que pé está a organização?',
-      campos: [
-        { id: 'comissao', tipo: 'escolha', rotulo: 'A turma já tem comissão?', opcoes: [
-          'Sim, já temos comissão',
-          'Estamos montando agora',
-          'Ainda não temos comissão',
-        ] },
-        { id: 'empresas', tipo: 'escolha', rotulo: 'Já conversaram com outras empresas?', opcoes: [
-          'Sim, já recebemos propostas',
-          'Estamos começando a pesquisar',
-          'Ainda não pesquisamos',
-        ] },
-      ],
-    },
   ];
 
   /* ---------- campos visíveis ---------- */
@@ -720,7 +705,7 @@ function initForm() {
     if (SITE.whatsapp) {
       const msg = `Olá, ${SITE.unidade}! Sou ${data.nome}${turma ? `, da turma de ${turma}` : ''}.`
         + ' Acabei de enviar as informações da minha turma pelo site.';
-      html += `<a class="btn btn-orange" href="https://wa.me/${onlyDigits(SITE.whatsapp)}?text=${encodeURIComponent(msg)}"
+      html += `<a class="btn btn-wa" href="https://wa.me/${onlyDigits(SITE.whatsapp)}?text=${encodeURIComponent(msg)}"
         target="_blank" rel="noopener"><svg class="icon"><use href="#i-chat"/></svg> Falar agora no WhatsApp</a>
         <p class="success-note">Já vai com o resumo da sua turma escrito. É só enviar.</p>`;
     }
@@ -739,8 +724,6 @@ function initForm() {
       window.dataLayer.push({
         event: 'formulario_turma',
         curso: data.curso,
-        comissao: data.comissao,
-        fundo: data.fundo,
         regiao: data.regiao,
       });
     }
